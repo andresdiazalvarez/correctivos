@@ -532,6 +532,25 @@ function clearChecklistRows(sheet) {
   }
 }
 
+function checklistCorrectivosLines(rows) {
+  return rows
+    .filter((record) => Array.isArray(record.defectos) && record.defectos.length)
+    .map((record) => {
+      const number = safeText(record.cantidad).trim() || "-";
+      const defects = record.defectos.map(reportDefectText).join(" / ");
+      return `Núm ${number}: ${defects}`;
+    });
+}
+
+function fillChecklistObservations(sheet, rows) {
+  const lines = checklistCorrectivosLines(rows);
+  sheet.getCell("A50").value = lines.length ? "Correctivos señalados:" : "Sin anomalías";
+  sheet.getCell("A51").value = lines.slice(0, 3).join("\n");
+  sheet.getCell("A52").value = lines.length > 3 ? lines.slice(3).join("\n") : "";
+  sheet.getCell("E50").value = lines.length ? "" : "Sin anomalías";
+  sheet.getCell("E51").value = lines.length ? "Con las anomalías indicadas en\n “Deficiencias pendiente de reparación”" : "";
+}
+
 function fillChecklistSheet(sheet, title, rows) {
   sheet.getCell("C2").value = title;
   clearChecklistRows(sheet);
@@ -547,6 +566,7 @@ function fillChecklistSheet(sheet, title, rows) {
     row.getCell(7).value = checklistOperation(record);
     row.getCell(8).value = fabricationYear ? String(fabricationYear + 20) : "";
   });
+  fillChecklistObservations(sheet, rows);
 }
 
 function safeSheetName(value, index) {
