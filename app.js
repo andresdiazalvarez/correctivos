@@ -531,6 +531,7 @@ function clearChecklistRows(sheet) {
     for (let col = 1; col <= 8; col += 1) sheet.getRow(row).getCell(col).value = "";
     sheet.getRow(row).getCell(38).value = "";
     sheet.getRow(row).getCell(39).value = "";
+    sheet.getRow(row).getCell(40).value = "";
   }
 }
 
@@ -548,13 +549,27 @@ function clearChecklistSystemObservations(sheet) {
   sheet.getCell("E51").value = "";
 }
 
+function prepareChecklistObservationCells(sheet, rowNumber, text) {
+  const row = sheet.getRow(rowNumber);
+  const observation = row.getCell(39);
+  const extraObservation = row.getCell(40);
+  if (!observation.isMerged && !extraObservation.isMerged) sheet.mergeCells(rowNumber, 39, rowNumber, 40);
+  observation.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+  observation.font = { ...(observation.font || {}), size: 8 };
+  if (text) {
+    row.height = Math.max(row.height || 20.25, text.length > 70 ? 42 : text.length > 38 ? 32 : 24);
+  }
+}
+
 function fillChecklistSheet(sheet, title, rows) {
   sheet.getCell("C2").value = title;
   clearChecklistRows(sheet);
   clearChecklistSystemObservations(sheet);
   rows.forEach((record, index) => {
     const row = sheet.getRow(8 + index);
+    const rowNumber = 8 + index;
     const fabricationYear = parseYear(record.fechaFabricacion);
+    const defectsText = checklistDefectsText(record);
     row.getCell(1).value = safeText(record.cantidad);
     row.getCell(2).value = safeText(record.numeroSerie);
     row.getCell(3).value = safeText(record.modelo);
@@ -564,7 +579,8 @@ function fillChecklistSheet(sheet, title, rows) {
     row.getCell(7).value = checklistOperation(record);
     row.getCell(8).value = fabricationYear ? String(fabricationYear + 20) : "";
     row.getCell(38).value = safeText(record.ubicacion);
-    row.getCell(39).value = checklistDefectsText(record);
+    row.getCell(39).value = defectsText;
+    prepareChecklistObservationCells(sheet, rowNumber, defectsText);
   });
 }
 
