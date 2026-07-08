@@ -1,0 +1,1 @@
+window.INITIAL_EXTINTORES_LISTADOS = [];

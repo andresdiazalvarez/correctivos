@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#b45cff" />
+    <title>Voz</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <img src="icon.svg" alt="" />
+        <span>Voz</span>
+      </div>
+    </header>
+
+    <main>
+      <section id="homeView" class="hero">
+        <p class="kicker">CONTROL DE EXTINTORES</p>
+        <h1>Listado, fotos e importación.</h1>
+        <p class="subtitle">Importa Excel, añade solo registros nuevos, corrige datos, guarda fotos y descarga todo junto.</p>
+
+        <div class="card">
+          <button id="clearRecordsBtn" class="danger dangerTop">Eliminar todos los registros</button>
+
+          <div class="stats">
+            <div><strong id="totalCount">0</strong><span>Total</span></div>
+            <div><strong id="seenCount">0</strong><span>Vistos</span></div>
+            <div><strong id="pendingCount">0</strong><span>Pendientes</span></div>
+          </div>
+
+          <button id="openListBtn" class="primary">▦ Ver registros en tabla</button>
+          <button id="importExcelBtn" class="secondary">Importar Excel</button>
+          <input id="importExcelInput" class="hidden" type="file" accept=".xlsx,.xls" />
+          <p id="importStatus" class="importStatus"></p>
+          <button id="newRecordBtn" class="secondary">Meter dato nuevo</button>
+          <button id="downloadExcelBtn" class="secondary">Descargar Excel</button>
+          <button id="openCorrectivosBtn" class="secondary">Correctivos</button>
+        </div>
+      </section>
+
+      <section id="listView" class="hidden">
+        <button class="back" data-back="home">← Volver</button>
+        <p class="kicker">REGISTROS</p>
+        <h2>Listado</h2>
+
+        <div class="compactFilters">
+          <label>Edificio<input id="filterEdificio" type="search" placeholder="Filtrar edificio" /></label>
+          <label>Número SYCo<input id="filterNumero" type="search" placeholder="Filtrar número" /></label>
+          <label>Nº serie<input id="filterSerie" type="search" placeholder="Filtrar serie" /></label>
+          <label>Ordenar
+            <select id="sortOrder">
+              <option value="none">Sin ordenar</option>
+              <option value="edificio">Edificio</option>
+              <option value="numero">Número SYCo</option>
+            </select>
+          </label>
+          <label>Estado
+            <select id="seenFilter">
+              <option value="all">Todos</option>
+              <option value="pending">Pendientes</option>
+              <option value="seen">Vistos</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="listActions">
+          <button id="newRecordFromListBtn" class="secondary">Meter dato nuevo</button>
+          <button id="downloadExcelFromTableBtn" class="secondary">⇩ Descargar filtrados en Excel</button>
+        </div>
+
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Edificio</th>
+                <th>Número SYCo</th>
+                <th>Ubicación</th>
+                <th>Modelo</th>
+                <th>Nº serie</th>
+                <th>Fabricación</th>
+                <th>Retimbrado</th>
+                <th>Observaciones</th>
+                <th>Señal</th>
+                <th>Defectos</th>
+                <th>Foto 1</th>
+                <th>Foto 2</th>
+                <th>Visto</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="recordsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="correctivosView" class="hidden">
+        <button class="back" data-back="home">← Volver</button>
+        <p class="kicker">INFORMES</p>
+        <h2>Correctivos</h2>
+        <p class="subtitle">Análisis de registros con defectos y generación del listado en Word.</p>
+
+        <div class="stats reportStats">
+          <div><strong id="correctivosCount">0</strong><span>Correctivos</span></div>
+          <div><strong id="correctivosGroupsCount">0</strong><span>Grupos</span></div>
+          <div><strong id="correctivosClientsCount">0</strong><span>Clientes</span></div>
+        </div>
+
+        <div class="reportRecord">
+          <div>
+            <h3>Correctivos</h3>
+            <p id="correctivosSummary">No hay defectos registrados.</p>
+          </div>
+          <button id="downloadCorrectivosWordBtn" class="primary">Sacar Word</button>
+        </div>
+
+        <div id="correctivosPreview" class="reportPreview"></div>
+      </section>
+
+      <section id="formView" class="hidden">
+        <div class="formTopLine">
+          <button class="back" data-back="list">← Volver</button>
+          <div class="lastNumberBox">
+            <span>Último número</span>
+            <strong id="lastNumberUsed">-</strong>
+          </div>
+        </div>
+        <p class="kicker" id="formKicker">REGISTRO</p>
+        <h2 id="formTitle">Editar extintor</h2>
+
+        <form id="recordForm" class="card formCard">
+          <input type="hidden" id="recordId" />
+
+          <div class="voiceBlock">
+            <div>
+              <h3>Entrada por voz</h3>
+              <p id="voiceStatus">Pulsa iniciar y dicta: numero, modelo con codigo, serie, fabricacion y retimbrado.</p>
+            </div>
+            <div class="voiceActions">
+              <button type="button" id="voiceStartBtn" class="secondary">Iniciar voz</button>
+              <button type="button" id="voiceStopBtn" class="secondary" disabled>Parar voz</button>
+            </div>
+          </div>
+
+          <label>Cliente<input id="cliente" /></label>
+          <label>Edificio<input id="edificio" /></label>
+          <label>Número SYCo<input id="cantidad" /></label>
+          <label>Ubicación<textarea id="ubicacion" rows="2"></textarea></label>
+          <label>Modelo
+            <input id="modelo" list="modelosExtintor" placeholder="Escribe o elige modelo" />
+            <datalist id="modelosExtintor">
+              <option value=""></option>
+              <option value="ABC 6 KG"></option>
+              <option value="ABC 3 KG"></option>
+              <option value="ABC 9 KG"></option>
+              <option value="CO2 2 KG"></option>
+              <option value="CO2 5 KG"></option>
+              <option value="CO2 10 KG"></option>
+              <option value="ABF 6 KG"></option>
+              <option value="ABF 9 KG"></option>
+              <option value="ABC 1 KG"></option>
+              <option value="ABC 25 KG"></option>
+              <option value="ABC 50 KG"></option>
+              <option value="ABC 100 KG"></option>
+            </datalist>
+          </label>
+          <label>Nº serie<input id="numeroSerie" /></label>
+          <label>Fecha / año fabricación
+            <select id="fechaFabricacion">
+              <option value=""></option>
+              <option value="2005">2005</option>
+              <option value="2006">2006</option>
+              <option value="2007">2007</option>
+              <option value="2008">2008</option>
+              <option value="2009">2009</option>
+              <option value="2010">2010</option>
+              <option value="2011">2011</option>
+              <option value="2012">2012</option>
+              <option value="2013">2013</option>
+              <option value="2014">2014</option>
+              <option value="2015">2015</option>
+              <option value="2016">2016</option>
+              <option value="2017">2017</option>
+              <option value="2018">2018</option>
+              <option value="2019">2019</option>
+              <option value="2020">2020</option>
+              <option value="2021">2021</option>
+              <option value="2022">2022</option>
+              <option value="2023">2023</option>
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+            </select>
+          </label>
+          <label>Fecha retimbrado
+            <select id="fechaProximoRetimbrado">
+              <option value=""></option>
+              <option value="2010">2010</option>
+              <option value="2011">2011</option>
+              <option value="2012">2012</option>
+              <option value="2013">2013</option>
+              <option value="2014">2014</option>
+              <option value="2015">2015</option>
+              <option value="2016">2016</option>
+              <option value="2017">2017</option>
+              <option value="2018">2018</option>
+              <option value="2019">2019</option>
+              <option value="2020">2020</option>
+              <option value="2021">2021</option>
+              <option value="2022">2022</option>
+              <option value="2023">2023</option>
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+            </select>
+          </label>
+          <label>Observaciones<textarea id="observaciones" rows="3"></textarea></label>
+          <label>Señal
+            <select id="senal">
+              <option value="">Sin indicar</option>
+              <option value="2017">2017</option>
+              <option value="2018">2018</option>
+              <option value="2019">2019</option>
+              <option value="2020">2020</option>
+              <option value="2021">2021</option>
+              <option value="2022">2022</option>
+              <option value="2023">2023</option>
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+            </select>
+          </label>
+
+          <div class="defectsBlock">
+            <h3>Defectos encontrados</h3>
+            <div id="defectsList" class="checks"></div>
+          </div>
+
+          <div class="photosBlock">
+            <h3>Fotografías</h3>
+            <div class="photoGrid">
+              <div class="photoSlot">
+                <strong>Foto 1</strong>
+                <label class="photoBox" id="photoBox1">
+                  <input id="photoInput1" type="file" accept="image/*" capture="environment" />
+                  <span>+ Hacer foto</span>
+                  <img id="photoPreview1" alt="Foto 1" class="hidden" />
+                </label>
+                <button type="button" id="deletePhoto1" class="photoDelete">Eliminar foto</button>
+              </div>
+              <div class="photoSlot">
+                <strong>Foto 2</strong>
+                <label class="photoBox" id="photoBox2">
+                  <input id="photoInput2" type="file" accept="image/*" capture="environment" />
+                  <span>+ Hacer foto</span>
+                  <img id="photoPreview2" alt="Foto 2" class="hidden" />
+                </label>
+                <button type="button" id="deletePhoto2" class="photoDelete">Eliminar foto</button>
+              </div>
+            </div>
+          </div>
+
+          <label class="seenLine">
+            <input id="visto" type="checkbox" />
+            <span>Marcar como visto</span>
+          </label>
+
+          <div class="actions">
+            <button type="button" id="viewTableFromFormBtn" class="secondary">▦ Ver registros en tabla</button>
+            <button type="submit" class="primary">Guardar</button>
+            <button type="button" id="deleteBtn" class="danger">Eliminar</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="exceljs.min.js"></script>
+    <script src="seed-data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
