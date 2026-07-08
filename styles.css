@@ -125,6 +125,16 @@ button {
   margin-top: 10px;
 }
 
+.grayButton {
+  background: #eef0f3;
+  color: #2f343b;
+  border-color: #c7ccd3;
+}
+
+.grayButton:hover {
+  background: #dde1e6;
+}
+
 .danger {
   width: 100%;
   background: #fff1f1;
