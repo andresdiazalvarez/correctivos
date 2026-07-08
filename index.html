@@ -38,6 +38,7 @@
           <button id="newRecordBtn" class="secondary">Meter dato nuevo</button>
           <button id="downloadExcelBtn" class="secondary">Descargar Excel</button>
           <button id="openCorrectivosBtn" class="secondary grayButton">Correctivos</button>
+          <button id="openChecklistBtn" class="secondary grayButton">Checklist</button>
         </div>
       </section>
 
@@ -118,6 +119,36 @@
         </div>
 
         <div id="correctivosPreview" class="reportPreview"></div>
+      </section>
+
+      <section id="checklistView" class="hidden">
+        <button class="back" data-back="home">← Volver</button>
+        <p class="kicker">INFORMES</p>
+        <h2>Checklist</h2>
+        <p class="subtitle">Rellena la plantilla de extintores con los datos guardados en la app.</p>
+
+        <div class="stats reportStats">
+          <div><strong id="checklistCount">0</strong><span>Registros</span></div>
+          <div><strong id="checklistPagesCount">0</strong><span>Hojas</span></div>
+          <div><strong id="checklistClientsCount">0</strong><span>Clientes</span></div>
+        </div>
+
+        <div class="reportRecord">
+          <div>
+            <h3>Checklist</h3>
+            <p id="checklistSummary">No hay registros para rellenar.</p>
+          </div>
+          <button id="downloadChecklistBtn" class="primary">Sacar checklist</button>
+        </div>
+
+        <div class="instructionBox">
+          <h3>Instrucciones de relleno</h3>
+          <p><strong>Cliente:</strong> cliente. edificio</p>
+          <p><strong>Núm:</strong> Número SYCo</p>
+          <p><strong>Eficacía:</strong> no se rellena</p>
+          <p><strong>Op. Realiza:</strong> Revisión, o Revisión y recarga cuando en observaciones se indique recarga o retimbrado.</p>
+          <p><strong>Cadu 20 A:</strong> año de fabricación + 20.</p>
+        </div>
       </section>
 
       <section id="formView" class="hidden">

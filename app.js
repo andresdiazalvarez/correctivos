@@ -2,6 +2,7 @@ const DB_NAME = "voz-db-v1";
 const DB_VERSION = 1;
 const STORE_NAME = "state";
 const LAST_NUMBER_KEY = "voz-last-number-used";
+const CHECKLIST_TEMPLATE_URL = "./checklist-template.xlsx";
 
 const defectOptions = [
   "Extintor caducado.",
@@ -197,9 +198,11 @@ function showView(name) {
   $("homeView").classList.toggle("hidden", name !== "home");
   $("listView").classList.toggle("hidden", name !== "list");
   $("correctivosView").classList.toggle("hidden", name !== "correctivos");
+  $("checklistView").classList.toggle("hidden", name !== "checklist");
   $("formView").classList.toggle("hidden", name !== "form");
   if (name === "list") renderTable();
   if (name === "correctivos") renderCorrectivos();
+  if (name === "checklist") renderChecklist();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -424,6 +427,164 @@ function downloadCorrectivosWord() {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = `Correctivos_extintores_${new Date().toISOString().slice(0, 10)}.doc`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function checklistRecords() {
+  return records
+    .map(cleanRecord)
+    .filter((record) => [record.cliente, record.edificio, record.cantidad, record.modelo, record.numeroSerie].some((value) => safeText(value).trim()))
+    .sort((a, b) =>
+      compareText(a.cliente, b.cliente) ||
+      compareText(a.edificio, b.edificio) ||
+      compareText(a.cantidad, b.cantidad)
+    );
+}
+
+function checklistGroupKey(record) {
+  return `${normalizeKeyPart(record.cliente)}|${normalizeKeyPart(record.edificio)}`;
+}
+
+function checklistHeader(record) {
+  const cliente = safeText(record.cliente).trim();
+  const edificio = safeText(record.edificio).trim();
+  return [cliente, edificio].filter(Boolean).join(". ");
+}
+
+function buildChecklistGroups() {
+  const groups = new Map();
+  for (const record of checklistRecords()) {
+    const key = checklistGroupKey(record);
+    if (!groups.has(key)) groups.set(key, { title: checklistHeader(record) || "Checklist", records: [] });
+    groups.get(key).records.push(record);
+  }
+  return Array.from(groups.values());
+}
+
+function checklistPageCount(groups = buildChecklistGroups()) {
+  return groups.reduce((total, group) => total + Math.max(1, Math.ceil(group.records.length / 20)), 0);
+}
+
+function renderChecklist() {
+  const groups = buildChecklistGroups();
+  const totalRecords = groups.reduce((total, group) => total + group.records.length, 0);
+  $("checklistCount").textContent = totalRecords;
+  $("checklistPagesCount").textContent = totalRecords ? checklistPageCount(groups) : 0;
+  $("checklistClientsCount").textContent = groups.length;
+  $("checklistSummary").textContent = totalRecords
+    ? `${totalRecords} registros preparados en ${groups.length} grupos de cliente y edificio.`
+    : "No hay registros para rellenar.";
+  $("downloadChecklistBtn").disabled = !totalRecords;
+}
+
+function parseYear(value) {
+  const match = safeText(value).match(/\b(19|20)\d{2}\b/);
+  if (match) return Number(match[0]);
+  const shortYear = safeText(value).match(/\b\d{2}\b/);
+  if (shortYear) return 2000 + Number(shortYear[0]);
+  return null;
+}
+
+function checklistOperation(record) {
+  const text = normalizeSpeechText([record.observaciones, ...(record.defectos || [])].join(" "));
+  return text.includes("recarg") || text.includes("retimbrad") ? "Revisión y recarga" : "Revisión";
+}
+
+function copyCell(sourceCell, targetCell) {
+  targetCell.value = sourceCell.value;
+  targetCell.style = JSON.parse(JSON.stringify(sourceCell.style || {}));
+  if (sourceCell.numFmt) targetCell.numFmt = sourceCell.numFmt;
+}
+
+function copyTemplateSheet(workbook, sourceSheet, name) {
+  const sheet = workbook.addWorksheet(name);
+  sheet.pageSetup = JSON.parse(JSON.stringify(sourceSheet.pageSetup || {}));
+  sheet.pageMargins = JSON.parse(JSON.stringify(sourceSheet.pageMargins || {}));
+  sheet.headerFooter = JSON.parse(JSON.stringify(sourceSheet.headerFooter || {}));
+  sheet.views = JSON.parse(JSON.stringify(sourceSheet.views || []));
+  sheet.properties = JSON.parse(JSON.stringify(sourceSheet.properties || {}));
+
+  for (let col = 1; col <= sourceSheet.columnCount; col += 1) {
+    const sourceCol = sourceSheet.getColumn(col);
+    const targetCol = sheet.getColumn(col);
+    targetCol.width = sourceCol.width;
+    targetCol.hidden = sourceCol.hidden;
+    targetCol.outlineLevel = sourceCol.outlineLevel;
+  }
+
+  for (let rowNumber = 1; rowNumber <= sourceSheet.rowCount; rowNumber += 1) {
+    const sourceRow = sourceSheet.getRow(rowNumber);
+    const targetRow = sheet.getRow(rowNumber);
+    targetRow.height = sourceRow.height;
+    for (let col = 1; col <= sourceSheet.columnCount; col += 1) {
+      copyCell(sourceRow.getCell(col), targetRow.getCell(col));
+    }
+  }
+
+  (sourceSheet.model?.merges || []).forEach((range) => sheet.mergeCells(range));
+  return sheet;
+}
+
+function clearChecklistRows(sheet) {
+  for (let row = 8; row <= 27; row += 1) {
+    for (let col = 1; col <= 8; col += 1) sheet.getRow(row).getCell(col).value = "";
+  }
+}
+
+function fillChecklistSheet(sheet, title, rows) {
+  sheet.getCell("C2").value = title;
+  clearChecklistRows(sheet);
+  rows.forEach((record, index) => {
+    const row = sheet.getRow(8 + index);
+    const fabricationYear = parseYear(record.fechaFabricacion);
+    row.getCell(1).value = safeText(record.cantidad);
+    row.getCell(2).value = safeText(record.numeroSerie);
+    row.getCell(3).value = safeText(record.modelo);
+    row.getCell(4).value = "";
+    row.getCell(5).value = safeText(record.fechaFabricacion);
+    row.getCell(6).value = safeText(record.fechaProximoRetimbrado);
+    row.getCell(7).value = checklistOperation(record);
+    row.getCell(8).value = fabricationYear ? String(fabricationYear + 20) : "";
+  });
+}
+
+function safeSheetName(value, index) {
+  const name = safeText(value).replace(/[\\/*?:[\]]/g, " ").replace(/\s+/g, " ").trim() || `Checklist ${index}`;
+  return name.slice(0, 25) + (index > 1 ? ` ${index}` : "");
+}
+
+async function downloadChecklist() {
+  if (!window.ExcelJS) return alert("No se ha cargado el generador de Excel.");
+  const groups = buildChecklistGroups();
+  if (!groups.length) return alert("No hay registros para generar el checklist.");
+
+  const response = await fetch(CHECKLIST_TEMPLATE_URL);
+  if (!response.ok) return alert("No se ha podido cargar la plantilla del checklist.");
+
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(await response.arrayBuffer());
+  const templateSheet = workbook.worksheets[0];
+  const pages = [];
+
+  groups.forEach((group) => {
+    for (let start = 0; start < group.records.length; start += 20) {
+      pages.push({ title: group.title, records: group.records.slice(start, start + 20) });
+    }
+  });
+
+  const sheets = pages.map((page, index) => {
+    const sheet = index === 0 ? templateSheet : copyTemplateSheet(workbook, templateSheet, safeSheetName(page.title, index + 1));
+    sheet.name = safeSheetName(page.title, index + 1);
+    return { sheet, page };
+  });
+
+  sheets.forEach(({ sheet, page }) => fillChecklistSheet(sheet, page.title, page.records));
+
+  const blob = new Blob([await workbook.xlsx.writeBuffer()], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `Checklist_extintores_${new Date().toISOString().slice(0, 10)}.xlsx`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
@@ -1065,11 +1226,13 @@ async function downloadExcel() {
 function bindEvents() {
   $("openListBtn").addEventListener("click", () => showView("list"));
   $("openCorrectivosBtn").addEventListener("click", () => showView("correctivos"));
+  $("openChecklistBtn").addEventListener("click", () => showView("checklist"));
   $("newRecordBtn").addEventListener("click", () => openForm());
   $("newRecordFromListBtn").addEventListener("click", () => openForm());
   $("downloadExcelBtn").addEventListener("click", downloadExcel);
   $("downloadExcelFromTableBtn").addEventListener("click", downloadExcel);
   $("downloadCorrectivosWordBtn").addEventListener("click", downloadCorrectivosWord);
+  $("downloadChecklistBtn").addEventListener("click", downloadChecklist);
   $("clearRecordsBtn").addEventListener("click", clearAllRecords);
   $("viewTableFromFormBtn").addEventListener("click", () => showView("list"));
   $("voiceStartBtn").addEventListener("click", startVoiceInput);
