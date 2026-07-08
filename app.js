@@ -533,21 +533,19 @@ function clearChecklistRows(sheet) {
 }
 
 function checklistCorrectivosLines(rows) {
-  return rows
+  const uniqueLines = new Set();
+  rows
     .filter((record) => Array.isArray(record.defectos) && record.defectos.length)
-    .map((record) => {
-      const number = safeText(record.cantidad).trim() || "-";
-      const defects = record.defectos.map(reportDefectText).join(" / ");
-      return `Núm ${number}: ${defects}`;
-    });
+    .forEach((record) => uniqueLines.add(record.defectos.map(reportDefectText).join(" / ")));
+  return Array.from(uniqueLines);
 }
 
 function fillChecklistObservations(sheet, rows) {
   const lines = checklistCorrectivosLines(rows);
-  sheet.getCell("A50").value = lines.length ? "Correctivos señalados:" : "Sin anomalías";
-  sheet.getCell("A51").value = lines.slice(0, 3).join("\n");
-  sheet.getCell("A52").value = lines.length > 3 ? lines.slice(3).join("\n") : "";
-  sheet.getCell("E50").value = lines.length ? "" : "Sin anomalías";
+  sheet.getCell("A50").value = lines[0] || "";
+  sheet.getCell("A51").value = lines.slice(1, 4).join("\n");
+  sheet.getCell("A52").value = lines.length > 4 ? lines.slice(4).join("\n") : "";
+  sheet.getCell("E50").value = "";
   sheet.getCell("E51").value = lines.length ? "Con las anomalías indicadas en\n “Deficiencias pendiente de reparación”" : "";
 }
 
