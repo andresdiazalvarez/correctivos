@@ -529,29 +529,29 @@ function copyTemplateSheet(workbook, sourceSheet, name) {
 function clearChecklistRows(sheet) {
   for (let row = 8; row <= 27; row += 1) {
     for (let col = 1; col <= 8; col += 1) sheet.getRow(row).getCell(col).value = "";
+    sheet.getRow(row).getCell(38).value = "";
+    sheet.getRow(row).getCell(39).value = "";
   }
 }
 
-function checklistCorrectivosLines(rows) {
-  const uniqueLines = new Set();
-  rows
-    .filter((record) => Array.isArray(record.defectos) && record.defectos.length)
-    .forEach((record) => uniqueLines.add(record.defectos.map(reportDefectText).join(" / ")));
-  return Array.from(uniqueLines);
+function checklistDefectsText(record) {
+  return Array.isArray(record.defectos) && record.defectos.length
+    ? record.defectos.map(reportDefectText).join(" / ")
+    : "";
 }
 
-function fillChecklistObservations(sheet, rows) {
-  const lines = checklistCorrectivosLines(rows);
-  sheet.getCell("A50").value = lines[0] || "";
-  sheet.getCell("A51").value = lines.slice(1, 4).join("\n");
-  sheet.getCell("A52").value = lines.length > 4 ? lines.slice(4).join("\n") : "";
+function clearChecklistSystemObservations(sheet) {
+  sheet.getCell("A50").value = "";
+  sheet.getCell("A51").value = "";
+  sheet.getCell("A52").value = "";
   sheet.getCell("E50").value = "";
-  sheet.getCell("E51").value = lines.length ? "Con las anomalías indicadas en\n “Deficiencias pendiente de reparación”" : "";
+  sheet.getCell("E51").value = "";
 }
 
 function fillChecklistSheet(sheet, title, rows) {
   sheet.getCell("C2").value = title;
   clearChecklistRows(sheet);
+  clearChecklistSystemObservations(sheet);
   rows.forEach((record, index) => {
     const row = sheet.getRow(8 + index);
     const fabricationYear = parseYear(record.fechaFabricacion);
@@ -563,8 +563,9 @@ function fillChecklistSheet(sheet, title, rows) {
     row.getCell(6).value = safeText(record.fechaProximoRetimbrado);
     row.getCell(7).value = checklistOperation(record);
     row.getCell(8).value = fabricationYear ? String(fabricationYear + 20) : "";
+    row.getCell(38).value = safeText(record.ubicacion);
+    row.getCell(39).value = checklistDefectsText(record);
   });
-  fillChecklistObservations(sheet, rows);
 }
 
 function safeSheetName(value, index) {
