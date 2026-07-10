@@ -485,43 +485,37 @@ function checklistRecords() {
     .filter((record) => [record.cliente, record.edificio, record.cantidad, record.modelo, record.numeroSerie].some((value) => safeText(value).trim()))
     .sort((a, b) =>
       compareText(a.cliente, b.cliente) ||
-      compareText(a.edificio, b.edificio) ||
-      compareText(a.cantidad, b.cantidad)
+      compareText(a.cantidad, b.cantidad) ||
+      compareText(a.edificio, b.edificio)
     );
 }
 
-function checklistGroupKey(record) {
-  return `${normalizeKeyPart(record.cliente)}|${normalizeKeyPart(record.edificio)}`;
+function checklistHeader(rows) {
+  const cliente = safeText(rows.find((record) => safeText(record.cliente).trim())?.cliente).trim();
+  const edificios = Array.from(new Set(rows.map((record) => safeText(record.edificio).trim()).filter(Boolean)));
+  const edificio = edificios.length === 1 ? edificios[0] : edificios.length > 1 ? "Varios edificios" : "";
+  return [cliente, edificio].filter(Boolean).join(". ") || "Checklist";
 }
 
-function checklistHeader(record) {
-  const cliente = safeText(record.cliente).trim();
-  const edificio = safeText(record.edificio).trim();
-  return [cliente, edificio].filter(Boolean).join(". ");
-}
-
-function buildChecklistGroups() {
-  const groups = new Map();
-  for (const record of checklistRecords()) {
-    const key = checklistGroupKey(record);
-    if (!groups.has(key)) groups.set(key, { title: checklistHeader(record) || "Checklist", records: [] });
-    groups.get(key).records.push(record);
+function buildChecklistPages() {
+  const recordsForChecklist = checklistRecords();
+  const pages = [];
+  for (let start = 0; start < recordsForChecklist.length; start += 20) {
+    const pageRecords = recordsForChecklist.slice(start, start + 20);
+    pages.push({ title: checklistHeader(pageRecords), records: pageRecords });
   }
-  return Array.from(groups.values());
-}
-
-function checklistPageCount(groups = buildChecklistGroups()) {
-  return groups.reduce((total, group) => total + Math.max(1, Math.ceil(group.records.length / 20)), 0);
+  return pages;
 }
 
 function renderChecklist() {
-  const groups = buildChecklistGroups();
-  const totalRecords = groups.reduce((total, group) => total + group.records.length, 0);
+  const pages = buildChecklistPages();
+  const totalRecords = pages.reduce((total, page) => total + page.records.length, 0);
+  const clients = new Set(checklistRecords().map((record) => normalizeKeyPart(record.cliente)).filter(Boolean));
   $("checklistCount").textContent = totalRecords;
-  $("checklistPagesCount").textContent = totalRecords ? checklistPageCount(groups) : 0;
-  $("checklistClientsCount").textContent = groups.length;
+  $("checklistPagesCount").textContent = pages.length;
+  $("checklistClientsCount").textContent = clients.size;
   $("checklistSummary").textContent = totalRecords
-    ? `${totalRecords} registros preparados en ${groups.length} grupos de cliente y edificio.`
+    ? `${totalRecords} registros preparados en ${pages.length} hojas ordenadas por número SYCo.`
     : "No hay registros para rellenar.";
   $("downloadChecklistBtn").disabled = !totalRecords;
 }
@@ -576,7 +570,7 @@ function copyTemplateSheet(workbook, sourceSheet, name) {
 
 function clearChecklistRows(sheet) {
   for (let row = 8; row <= 27; row += 1) {
-    for (let col = 1; col <= 8; col += 1) sheet.getRow(row).getCell(col).value = "";
+    for (let col = 1; col <= 40; col += 1) sheet.getRow(row).getCell(col).value = "";
     sheet.getRow(row).getCell(38).value = "";
     sheet.getRow(row).getCell(39).value = "";
     sheet.getRow(row).getCell(40).value = "";
@@ -639,8 +633,8 @@ function safeSheetName(value, index) {
 
 async function downloadChecklist() {
   if (!window.ExcelJS) return alert("No se ha cargado el generador de Excel.");
-  const groups = buildChecklistGroups();
-  if (!groups.length) return alert("No hay registros para generar el checklist.");
+  const pages = buildChecklistPages();
+  if (!pages.length) return alert("No hay registros para generar el checklist.");
 
   const response = await fetch(CHECKLIST_TEMPLATE_URL);
   if (!response.ok) return alert("No se ha podido cargar la plantilla del checklist.");
@@ -648,14 +642,6 @@ async function downloadChecklist() {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(await response.arrayBuffer());
   const templateSheet = workbook.worksheets[0];
-  const pages = [];
-
-  groups.forEach((group) => {
-    for (let start = 0; start < group.records.length; start += 20) {
-      pages.push({ title: group.title, records: group.records.slice(start, start + 20) });
-    }
-  });
-
   const sheets = pages.map((page, index) => {
     const sheet = index === 0 ? templateSheet : copyTemplateSheet(workbook, templateSheet, safeSheetName(page.title, index + 1));
     sheet.name = safeSheetName(page.title, index + 1);

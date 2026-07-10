@@ -1,4 +1,4 @@
-const CACHE_NAME = "correctivos-v15-import-defects";
+const CACHE_NAME = "correctivos-v17-clean-checks";
 const ASSETS = [
   "./",
   "./index.html",
