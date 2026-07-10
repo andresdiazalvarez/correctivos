@@ -50,10 +50,12 @@ function createId() {
 }
 
 function normalizeDefects(defects) {
-  return (Array.isArray(defects) ? defects : []).map((defect) => {
-    if (defect === "Cristal del extintor ausente o roto.") return "Cristal armario roto o sin cristal.";
-    return defect;
-  });
+  const normalized = [];
+  for (const defect of Array.isArray(defects) ? defects : []) {
+    const cleanDefect = normalizeDefectName(defect);
+    if (cleanDefect && !normalized.includes(cleanDefect)) normalized.push(cleanDefect);
+  }
+  return normalized;
 }
 
 function cleanRecord(record = {}) {
@@ -122,6 +124,50 @@ function importedValue(rowValues, headerMap, keys, fallbackCol) {
   return excelCellToText(rowValues[col]);
 }
 
+function truthyExcelValue(value) {
+  const text = normalizeHeader(excelCellToText(value));
+  return ["si", "x", "true", "1", "ok", "visto"].includes(text);
+}
+
+function normalizeDefectName(value) {
+  const text = safeText(value).trim();
+  if (!text || text === "-") return "";
+  const aliases = new Map([
+    ["cristaldelextintorausenteoroto", "Cristal armario roto o sin cristal."],
+    ["cristalarmariorotoosincristal", "Cristal armario roto o sin cristal."],
+    ...defectOptions.map((defect) => [normalizeHeader(defect), defect]),
+  ]);
+  return aliases.get(normalizeHeader(text)) || text;
+}
+
+function splitImportedDefects(value) {
+  return safeText(value)
+    .split(/\s*\/\s*|\r?\n|;/)
+    .map(normalizeDefectName)
+    .filter(Boolean);
+}
+
+function importedDefects(rowValues, headerMap) {
+  const defects = splitImportedDefects(importedValue(rowValues, headerMap, ["defectosencontrados", "defectos"], 0));
+  const flagColumns = [
+    ["extintorcaducado", "Extintor caducado."],
+    ["hayunobstaculo", "Hay un obstáculo."],
+    ["extintordescargado", "Extintor descargado."],
+    ["extintorsinpresion", "Extintor sin presión."],
+    ["extintorenelsuelo", "Extintor en el suelo."],
+    ["cristalarmariorotoosincristal", "Cristal armario roto o sin cristal."],
+    ["cristaldelextintorausenteoroto", "Cristal armario roto o sin cristal."],
+    ["sinsenal", "Sin señal."],
+    ["senalcaducada", "Señal caducada."],
+    ["extintorenmalestado", "Extintor en mal estado."],
+  ];
+  for (const [key, defect] of flagColumns) {
+    const col = headerMap[key];
+    if (col && truthyExcelValue(rowValues[col])) defects.push(defect);
+  }
+  return normalizeDefects(defects);
+}
+
 function rowToImportedRecord(rowValues, index, headerMap = {}) {
   return cleanRecord({
     id: `import-${Date.now()}-${index}-${Math.random().toString(16).slice(2)}`,
@@ -135,6 +181,8 @@ function rowToImportedRecord(rowValues, index, headerMap = {}) {
     fechaProximoRetimbrado: importedValue(rowValues, headerMap, ["fecharetimbrado", "retimbrado"], 8),
     observaciones: importedValue(rowValues, headerMap, ["observaciones", "observacion"], 9),
     senal: importedValue(rowValues, headerMap, ["senal"], 10),
+    defectos: importedDefects(rowValues, headerMap),
+    visto: truthyExcelValue(importedValue(rowValues, headerMap, ["visto"], 0)),
     origen: "importado",
   });
 }
@@ -1132,6 +1180,26 @@ async function clearAllRecords() {
   alert("Registros eliminados. Ya puedes importar otro cliente.");
 }
 
+function mergeImportedIntoExisting(existing, imported) {
+  let changed = false;
+  for (const key of fields) {
+    if (!safeText(existing[key]).trim() && safeText(imported[key]).trim()) {
+      existing[key] = imported[key];
+      changed = true;
+    }
+  }
+  const mergedDefects = normalizeDefects([...(existing.defectos || []), ...(imported.defectos || [])]);
+  if (mergedDefects.length !== (existing.defectos || []).length) {
+    existing.defectos = mergedDefects;
+    changed = true;
+  }
+  if (imported.visto && !existing.visto) {
+    existing.visto = true;
+    changed = true;
+  }
+  return changed;
+}
+
 async function importExcelFile(file) {
   if (!window.ExcelJS) return alert("No se ha cargado el lector de Excel.");
   const workbook = new ExcelJS.Workbook();
@@ -1139,8 +1207,9 @@ async function importExcelFile(file) {
   const sheet = workbook.worksheets[0];
   if (!sheet) return alert("No encuentro ninguna hoja en ese Excel.");
   const imported = [];
-  const knownKeys = new Set(records.map(recordKey).filter((key) => key !== "||"));
+  const knownRecords = new Map(records.map((record) => [recordKey(record), record]).filter(([key]) => key !== "||"));
   let skippedDuplicates = 0;
+  let updatedDuplicates = 0;
   const headerMap = buildHeaderMap(sheet.getRow(1).values);
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return;
@@ -1148,14 +1217,15 @@ async function importExcelFile(file) {
     const hasData = [record.edificio, record.cantidad, record.ubicacion, record.modelo, record.numeroSerie].some((value) => safeText(value).trim());
     if (!hasData) return;
     const key = recordKey(record);
-    if (key !== "||" && knownKeys.has(key)) {
+    if (key !== "||" && knownRecords.has(key)) {
       skippedDuplicates += 1;
+      if (mergeImportedIntoExisting(knownRecords.get(key), record)) updatedDuplicates += 1;
       return;
     }
-    if (key !== "||") knownKeys.add(key);
+    if (key !== "||") knownRecords.set(key, record);
     imported.push(record);
   });
-  if (!imported.length) {
+  if (!imported.length && !updatedDuplicates) {
     const message = skippedDuplicates
       ? `No se importaron registros nuevos. Ya existían ${skippedDuplicates} registros.`
       : "No se encontraron registros para importar.";
@@ -1164,8 +1234,8 @@ async function importExcelFile(file) {
   }
   records = [...imported, ...records];
   await saveRecords();
-  $("importStatus").textContent = `Importados ${imported.length} registros nuevos. Ya existían ${skippedDuplicates}.`;
-  alert(`Importación correcta.\nRegistros nuevos importados: ${imported.length}\nRegistros ya existentes: ${skippedDuplicates}`);
+  $("importStatus").textContent = `Importados ${imported.length} registros nuevos. Actualizados ${updatedDuplicates} existentes. Ya existían ${skippedDuplicates}.`;
+  alert(`Importación correcta.\nRegistros nuevos importados: ${imported.length}\nRegistros existentes actualizados: ${updatedDuplicates}\nRegistros ya existentes: ${skippedDuplicates}`);
 }
 
 function defectFlag(selected, defect) {
