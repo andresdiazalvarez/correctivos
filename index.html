@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#ff4fb8" />
+    <meta name="theme-color" content="#b45cff" />
     <title>Correctivos</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="styles.css" />
@@ -18,7 +18,7 @@
 
     <main>
       <section id="homeView" class="hero">
-        <p class="kicker">CORRECTIVOS</p>
+        <p class="kicker">CONTROL DE EXTINTORES</p>
         <h1>Listado, fotos e importación.</h1>
         <p class="subtitle">Importa Excel, añade solo registros nuevos, corrige datos, guarda fotos y descarga todo junto.</p>
 
@@ -37,6 +37,8 @@
           <p id="importStatus" class="importStatus"></p>
           <button id="newRecordBtn" class="secondary">Meter dato nuevo</button>
           <button id="downloadExcelBtn" class="secondary">Descargar Excel</button>
+          <button id="openCorrectivosBtn" class="secondary grayButton">Correctivos</button>
+          <button id="openChecklistBtn" class="secondary grayButton">Checklist</button>
         </div>
       </section>
 
@@ -67,7 +69,7 @@
 
         <div class="listActions">
           <button id="newRecordFromListBtn" class="secondary">Meter dato nuevo</button>
-          <button id="downloadExcelFromTableBtn" class="secondary">⇩ Descargar todos en Excel</button>
+          <button id="downloadExcelFromTableBtn" class="secondary">⇩ Descargar filtrados en Excel</button>
         </div>
 
         <div class="tableWrap">
@@ -93,6 +95,60 @@
             </thead>
             <tbody id="recordsBody"></tbody>
           </table>
+        </div>
+      </section>
+
+      <section id="correctivosView" class="hidden">
+        <button class="back" data-back="home">← Volver</button>
+        <p class="kicker">INFORMES</p>
+        <h2>Correctivos</h2>
+        <p class="subtitle">Análisis de registros con defectos y generación del listado en Word.</p>
+
+        <div class="stats reportStats">
+          <div><strong id="correctivosCount">0</strong><span>Correctivos</span></div>
+          <div><strong id="correctivosGroupsCount">0</strong><span>Grupos</span></div>
+          <div><strong id="correctivosClientsCount">0</strong><span>Clientes</span></div>
+        </div>
+
+        <div class="reportRecord">
+          <div>
+            <h3>Correctivos</h3>
+            <p id="correctivosSummary">No hay defectos registrados.</p>
+          </div>
+          <button id="downloadCorrectivosWordBtn" class="primary">Sacar Word</button>
+        </div>
+
+        <div id="correctivosPreview" class="reportPreview"></div>
+      </section>
+
+      <section id="checklistView" class="hidden">
+        <button class="back" data-back="home">← Volver</button>
+        <p class="kicker">INFORMES</p>
+        <h2>Checklist</h2>
+        <p class="subtitle">Rellena la plantilla de extintores con los datos guardados en la app.</p>
+
+        <div class="stats reportStats">
+          <div><strong id="checklistCount">0</strong><span>Registros</span></div>
+          <div><strong id="checklistPagesCount">0</strong><span>Hojas</span></div>
+          <div><strong id="checklistClientsCount">0</strong><span>Clientes</span></div>
+        </div>
+
+        <div class="reportRecord">
+          <div>
+            <h3>Checklist</h3>
+            <p id="checklistSummary">No hay registros para rellenar.</p>
+          </div>
+          <button id="downloadChecklistBtn" class="primary">Sacar checklist</button>
+        </div>
+
+        <div class="instructionBox">
+          <h3>Instrucciones de relleno</h3>
+          <p><strong>Cliente:</strong> cliente. edificio</p>
+          <p><strong>Núm:</strong> Número SYCo</p>
+          <p><strong>Eficacía:</strong> no se rellena</p>
+          <p><strong>Op. Realiza:</strong> Revisión, o Revisión y recarga cuando en observaciones se indique recarga o retimbrado.</p>
+          <p><strong>Cadu 20 A:</strong> año de fabricación + 20.</p>
+          <p><strong>Observaciones:</strong> en cada fila se ponen los correctivos señalados, por ejemplo: Sin señal. / Señal caducada. Si no hay correctivos queda en blanco.</p>
         </div>
       </section>
 

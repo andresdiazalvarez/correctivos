@@ -3,8 +3,8 @@
   "short_name": "Correctivos",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#fff0f8",
-  "theme_color": "#ff4fb8",
+  "background_color": "#f5f3ff",
+  "theme_color": "#b45cff",
   "icons": [
     {
       "src": "icon.svg",

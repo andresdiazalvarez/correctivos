@@ -1,4 +1,4 @@
-const CACHE_NAME = "correctivos-v1-rosa-chicle";
+const CACHE_NAME = "correctivos-v13-final";
 const ASSETS = [
   "./",
   "./index.html",
@@ -7,7 +7,8 @@ const ASSETS = [
   "./seed-data.js",
   "./manifest.webmanifest",
   "./icon.svg",
-  "./exceljs.min.js"
+  "./exceljs.min.js",
+  "./checklist-template.xlsx"
 ];
 
 self.addEventListener("install", (event) => {
