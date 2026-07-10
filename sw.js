@@ -1,4 +1,4 @@
-const CACHE_NAME = "voz-v12-checklist";
+const CACHE_NAME = "correctivos-v1-rosa-chicle";
 const ASSETS = [
   "./",
   "./index.html",
@@ -7,8 +7,7 @@ const ASSETS = [
   "./seed-data.js",
   "./manifest.webmanifest",
   "./icon.svg",
-  "./exceljs.min.js",
-  "./checklist-template.xlsx"
+  "./exceljs.min.js"
 ];
 
 self.addEventListener("install", (event) => {

@@ -1,10 +1,10 @@
 {
-  "name": "Voz",
-  "short_name": "Voz",
+  "name": "Correctivos",
+  "short_name": "Correctivos",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f5f3ff",
-  "theme_color": "#b45cff",
+  "background_color": "#fff0f8",
+  "theme_color": "#ff4fb8",
   "icons": [
     {
       "src": "icon.svg",

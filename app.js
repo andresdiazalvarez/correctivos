@@ -1,8 +1,7 @@
-const DB_NAME = "voz-db-v1";
+const DB_NAME = "correctivos-db-v1";
 const DB_VERSION = 1;
 const STORE_NAME = "state";
-const LAST_NUMBER_KEY = "voz-last-number-used";
-const CHECKLIST_TEMPLATE_URL = "./checklist-template.xlsx";
+const LAST_NUMBER_KEY = "correctivos-last-number-used";
 
 const defectOptions = [
   "Extintor caducado.",
@@ -15,10 +14,6 @@ const defectOptions = [
   "Señal caducada.",
   "Extintor en mal estado.",
 ];
-
-const reportDefectLabels = {
-  "Cristal armario roto o sin cristal.": "Cristal del extintor ausente o roto.",
-};
 
 const fields = [
   "cliente",
@@ -197,12 +192,8 @@ function updateStats() {
 function showView(name) {
   $("homeView").classList.toggle("hidden", name !== "home");
   $("listView").classList.toggle("hidden", name !== "list");
-  $("correctivosView").classList.toggle("hidden", name !== "correctivos");
-  $("checklistView").classList.toggle("hidden", name !== "checklist");
   $("formView").classList.toggle("hidden", name !== "form");
   if (name === "list") renderTable();
-  if (name === "correctivos") renderCorrectivos();
-  if (name === "checklist") renderChecklist();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -266,362 +257,6 @@ function renderTable() {
   body.querySelectorAll("[data-edit]").forEach((button) => {
     button.addEventListener("click", () => openForm(button.dataset.edit));
   });
-}
-
-function reportDefectText(defect) {
-  return reportDefectLabels[defect] || defect;
-}
-
-function reportDefectKey(record) {
-  return (record.defectos || []).map(reportDefectText).join(" / ");
-}
-
-function recordsWithCorrectivos() {
-  return records
-    .filter((record) => Array.isArray(record.defectos) && record.defectos.length)
-    .map(cleanRecord)
-    .sort((a, b) =>
-      compareText(a.cliente, b.cliente) ||
-      compareText(reportDefectKey(a), reportDefectKey(b)) ||
-      compareText(a.edificio, b.edificio) ||
-      compareText(a.cantidad, b.cantidad)
-    );
-}
-
-function buildCorrectivosAnalysis() {
-  const correctivos = recordsWithCorrectivos();
-  const clients = new Map();
-  for (const record of correctivos) {
-    const clientName = safeText(record.cliente).trim() || "Correctivos";
-    if (!clients.has(clientName)) clients.set(clientName, new Map());
-    const groups = clients.get(clientName);
-    const key = reportDefectKey(record);
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(record);
-  }
-  return { correctivos, clients };
-}
-
-function countCorrectivosGroups(clients) {
-  return Array.from(clients.values()).reduce((total, groups) => total + groups.size, 0);
-}
-
-function renderCorrectivos() {
-  const { correctivos, clients } = buildCorrectivosAnalysis();
-  const groupsCount = countCorrectivosGroups(clients);
-  $("correctivosCount").textContent = correctivos.length;
-  $("correctivosGroupsCount").textContent = groupsCount;
-  $("correctivosClientsCount").textContent = clients.size;
-  $("correctivosSummary").textContent = correctivos.length
-    ? `${correctivos.length} registros con defectos agrupados en ${groupsCount} bloques.`
-    : "No hay defectos registrados.";
-  $("downloadCorrectivosWordBtn").disabled = !correctivos.length;
-
-  const preview = $("correctivosPreview");
-  if (!correctivos.length) {
-    preview.innerHTML = `<p class="emptyReport">Cuando marques defectos en registros, aparecerá aquí el estudio de correctivos.</p>`;
-    return;
-  }
-
-  preview.innerHTML = Array.from(clients, ([clientName, groups]) => {
-    const groupRows = Array.from(groups, ([defects, rows]) => `
-      <div class="previewGroup">
-        <strong>${escapeHtml(defects)}</strong>
-        <span>${rows.length} registros</span>
-      </div>
-    `).join("");
-    return `
-      <div class="previewClient">
-        <h3>${escapeHtml(clientName)}</h3>
-        ${groupRows}
-      </div>
-    `;
-  }).join("");
-}
-
-function escapeHtml(value) {
-  return safeText(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function wordCell(value) {
-  return escapeHtml(value || "");
-}
-
-function correctivosWordHtml() {
-  const { correctivos, clients } = buildCorrectivosAnalysis();
-  const date = new Date().toLocaleDateString("es-ES");
-  const body = Array.from(clients, ([clientName, groups], clientIndex) => {
-    const blocks = Array.from(groups, ([defects, rows]) => {
-      const tableRows = rows.map((record) => `
-        <tr>
-          <td>${wordCell(record.edificio)}</td>
-          <td>${wordCell(record.cantidad)}</td>
-          <td>${wordCell(record.numeroSerie)}</td>
-          <td>${wordCell(record.modelo)}</td>
-        </tr>
-      `).join("");
-      return `
-        <h2>${escapeHtml(defects)}</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Edificio</th>
-              <th>Número</th>
-              <th>Nº serie</th>
-              <th>Modelo</th>
-            </tr>
-          </thead>
-          <tbody>${tableRows}</tbody>
-        </table>
-      `;
-    }).join("");
-    return `
-      <section class="${clientIndex ? "pageBreak" : ""}">
-        <h1>Listado de incidencias de extintores</h1>
-        <p class="client">${escapeHtml(clientName)}</p>
-        ${blocks}
-      </section>
-    `;
-  }).join("");
-
-  return `<!doctype html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-  <meta charset="utf-8">
-  <title>Listado de incidencias de extintores</title>
-  <style>
-    @page { size: 8.5in 11in; margin: .55in .55in .55in .55in; }
-    body { font-family: Arial, Helvetica, sans-serif; color: #000; font-size: 10.5pt; }
-    h1 { text-align: center; font-size: 20pt; margin: 18pt 0 18pt; font-weight: 700; }
-    .client { text-align: center; font-size: 16pt; font-weight: 700; margin: 0 0 18pt; }
-    .meta { color: #555; font-size: 9pt; text-align: right; margin: 0 0 10pt; }
-    h2 { color: #2f70c0; font-size: 14pt; margin: 22pt 0 6pt .2in; font-weight: 700; }
-    table { border-collapse: collapse; width: 100%; margin: 0 0 22pt; table-layout: fixed; }
-    th, td { border: 1px solid #000; padding: 2pt 5pt; vertical-align: top; line-height: 1.05; }
-    th { background: #d9eaf7; text-align: left; font-weight: 700; }
-    th:nth-child(1), td:nth-child(1) { width: 25%; }
-    th:nth-child(2), td:nth-child(2) { width: 25%; }
-    th:nth-child(3), td:nth-child(3) { width: 25%; }
-    th:nth-child(4), td:nth-child(4) { width: 25%; }
-    .pageBreak { page-break-before: always; }
-  </style>
-</head>
-<body>
-  <p class="meta">Generado el ${escapeHtml(date)}. Registros correctivos: ${correctivos.length}.</p>
-  ${body}
-</body>
-</html>`;
-}
-
-function downloadCorrectivosWord() {
-  const { correctivos } = buildCorrectivosAnalysis();
-  if (!correctivos.length) {
-    alert("No hay registros con defectos para generar el Word de correctivos.");
-    return;
-  }
-  const blob = new Blob(["\ufeff", correctivosWordHtml()], { type: "application/msword;charset=utf-8" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `Correctivos_extintores_${new Date().toISOString().slice(0, 10)}.doc`;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-}
-
-function checklistRecords() {
-  return records
-    .map(cleanRecord)
-    .filter((record) => [record.cliente, record.edificio, record.cantidad, record.modelo, record.numeroSerie].some((value) => safeText(value).trim()))
-    .sort((a, b) =>
-      compareText(a.cliente, b.cliente) ||
-      compareText(a.edificio, b.edificio) ||
-      compareText(a.cantidad, b.cantidad)
-    );
-}
-
-function checklistGroupKey(record) {
-  return `${normalizeKeyPart(record.cliente)}|${normalizeKeyPart(record.edificio)}`;
-}
-
-function checklistHeader(record) {
-  const cliente = safeText(record.cliente).trim();
-  const edificio = safeText(record.edificio).trim();
-  return [cliente, edificio].filter(Boolean).join(". ");
-}
-
-function buildChecklistGroups() {
-  const groups = new Map();
-  for (const record of checklistRecords()) {
-    const key = checklistGroupKey(record);
-    if (!groups.has(key)) groups.set(key, { title: checklistHeader(record) || "Checklist", records: [] });
-    groups.get(key).records.push(record);
-  }
-  return Array.from(groups.values());
-}
-
-function checklistPageCount(groups = buildChecklistGroups()) {
-  return groups.reduce((total, group) => total + Math.max(1, Math.ceil(group.records.length / 20)), 0);
-}
-
-function renderChecklist() {
-  const groups = buildChecklistGroups();
-  const totalRecords = groups.reduce((total, group) => total + group.records.length, 0);
-  $("checklistCount").textContent = totalRecords;
-  $("checklistPagesCount").textContent = totalRecords ? checklistPageCount(groups) : 0;
-  $("checklistClientsCount").textContent = groups.length;
-  $("checklistSummary").textContent = totalRecords
-    ? `${totalRecords} registros preparados en ${groups.length} grupos de cliente y edificio.`
-    : "No hay registros para rellenar.";
-  $("downloadChecklistBtn").disabled = !totalRecords;
-}
-
-function parseYear(value) {
-  const match = safeText(value).match(/\b(19|20)\d{2}\b/);
-  if (match) return Number(match[0]);
-  const shortYear = safeText(value).match(/\b\d{2}\b/);
-  if (shortYear) return 2000 + Number(shortYear[0]);
-  return null;
-}
-
-function checklistOperation(record) {
-  const text = normalizeSpeechText([record.observaciones, ...(record.defectos || [])].join(" "));
-  return text.includes("recarg") || text.includes("retimbrad") ? "Revisión y recarga" : "Revisión";
-}
-
-function copyCell(sourceCell, targetCell) {
-  targetCell.value = sourceCell.value;
-  targetCell.style = JSON.parse(JSON.stringify(sourceCell.style || {}));
-  if (sourceCell.numFmt) targetCell.numFmt = sourceCell.numFmt;
-}
-
-function copyTemplateSheet(workbook, sourceSheet, name) {
-  const sheet = workbook.addWorksheet(name);
-  sheet.pageSetup = JSON.parse(JSON.stringify(sourceSheet.pageSetup || {}));
-  sheet.pageMargins = JSON.parse(JSON.stringify(sourceSheet.pageMargins || {}));
-  sheet.headerFooter = JSON.parse(JSON.stringify(sourceSheet.headerFooter || {}));
-  sheet.views = JSON.parse(JSON.stringify(sourceSheet.views || []));
-  sheet.properties = JSON.parse(JSON.stringify(sourceSheet.properties || {}));
-
-  for (let col = 1; col <= sourceSheet.columnCount; col += 1) {
-    const sourceCol = sourceSheet.getColumn(col);
-    const targetCol = sheet.getColumn(col);
-    targetCol.width = sourceCol.width;
-    targetCol.hidden = sourceCol.hidden;
-    targetCol.outlineLevel = sourceCol.outlineLevel;
-  }
-
-  for (let rowNumber = 1; rowNumber <= sourceSheet.rowCount; rowNumber += 1) {
-    const sourceRow = sourceSheet.getRow(rowNumber);
-    const targetRow = sheet.getRow(rowNumber);
-    targetRow.height = sourceRow.height;
-    for (let col = 1; col <= sourceSheet.columnCount; col += 1) {
-      copyCell(sourceRow.getCell(col), targetRow.getCell(col));
-    }
-  }
-
-  (sourceSheet.model?.merges || []).forEach((range) => sheet.mergeCells(range));
-  return sheet;
-}
-
-function clearChecklistRows(sheet) {
-  for (let row = 8; row <= 27; row += 1) {
-    for (let col = 1; col <= 8; col += 1) sheet.getRow(row).getCell(col).value = "";
-    sheet.getRow(row).getCell(38).value = "";
-    sheet.getRow(row).getCell(39).value = "";
-    sheet.getRow(row).getCell(40).value = "";
-  }
-}
-
-function checklistDefectsText(record) {
-  return Array.isArray(record.defectos) && record.defectos.length
-    ? record.defectos.map(reportDefectText).join(" / ")
-    : "";
-}
-
-function clearChecklistSystemObservations(sheet) {
-  sheet.getCell("A50").value = "";
-  sheet.getCell("A51").value = "";
-  sheet.getCell("A52").value = "";
-  sheet.getCell("E50").value = "";
-  sheet.getCell("E51").value = "";
-}
-
-function prepareChecklistObservationCells(sheet, rowNumber, text) {
-  const row = sheet.getRow(rowNumber);
-  const observation = row.getCell(39);
-  const extraObservation = row.getCell(40);
-  if (!observation.isMerged && !extraObservation.isMerged) sheet.mergeCells(rowNumber, 39, rowNumber, 40);
-  observation.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
-  observation.font = { ...(observation.font || {}), size: 8 };
-  if (text) {
-    row.height = Math.max(row.height || 20.25, text.length > 70 ? 42 : text.length > 38 ? 32 : 24);
-  }
-}
-
-function fillChecklistSheet(sheet, title, rows) {
-  sheet.getCell("C2").value = title;
-  clearChecklistRows(sheet);
-  clearChecklistSystemObservations(sheet);
-  rows.forEach((record, index) => {
-    const row = sheet.getRow(8 + index);
-    const rowNumber = 8 + index;
-    const fabricationYear = parseYear(record.fechaFabricacion);
-    const defectsText = checklistDefectsText(record);
-    row.getCell(1).value = safeText(record.cantidad);
-    row.getCell(2).value = safeText(record.numeroSerie);
-    row.getCell(3).value = safeText(record.modelo);
-    row.getCell(4).value = "";
-    row.getCell(5).value = safeText(record.fechaFabricacion);
-    row.getCell(6).value = safeText(record.fechaProximoRetimbrado);
-    row.getCell(7).value = checklistOperation(record);
-    row.getCell(8).value = fabricationYear ? String(fabricationYear + 20) : "";
-    row.getCell(38).value = safeText(record.ubicacion);
-    row.getCell(39).value = defectsText;
-    prepareChecklistObservationCells(sheet, rowNumber, defectsText);
-  });
-}
-
-function safeSheetName(value, index) {
-  const name = safeText(value).replace(/[\\/*?:[\]]/g, " ").replace(/\s+/g, " ").trim() || `Checklist ${index}`;
-  return name.slice(0, 25) + (index > 1 ? ` ${index}` : "");
-}
-
-async function downloadChecklist() {
-  if (!window.ExcelJS) return alert("No se ha cargado el generador de Excel.");
-  const groups = buildChecklistGroups();
-  if (!groups.length) return alert("No hay registros para generar el checklist.");
-
-  const response = await fetch(CHECKLIST_TEMPLATE_URL);
-  if (!response.ok) return alert("No se ha podido cargar la plantilla del checklist.");
-
-  const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(await response.arrayBuffer());
-  const templateSheet = workbook.worksheets[0];
-  const pages = [];
-
-  groups.forEach((group) => {
-    for (let start = 0; start < group.records.length; start += 20) {
-      pages.push({ title: group.title, records: group.records.slice(start, start + 20) });
-    }
-  });
-
-  const sheets = pages.map((page, index) => {
-    const sheet = index === 0 ? templateSheet : copyTemplateSheet(workbook, templateSheet, safeSheetName(page.title, index + 1));
-    sheet.name = safeSheetName(page.title, index + 1);
-    return { sheet, page };
-  });
-
-  sheets.forEach(({ sheet, page }) => fillChecklistSheet(sheet, page.title, page.records));
-
-  const blob = new Blob([await workbook.xlsx.writeBuffer()], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `Checklist_extintores_${new Date().toISOString().slice(0, 10)}.xlsx`;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 function renderDefects(selected = []) {
@@ -1139,33 +774,22 @@ async function importExcelFile(file) {
   const sheet = workbook.worksheets[0];
   if (!sheet) return alert("No encuentro ninguna hoja en ese Excel.");
   const imported = [];
-  const knownKeys = new Set(records.map(recordKey).filter((key) => key !== "||"));
-  let skippedDuplicates = 0;
   const headerMap = buildHeaderMap(sheet.getRow(1).values);
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return;
     const record = rowToImportedRecord(row.values, rowNumber, headerMap);
     const hasData = [record.edificio, record.cantidad, record.ubicacion, record.modelo, record.numeroSerie].some((value) => safeText(value).trim());
     if (!hasData) return;
-    const key = recordKey(record);
-    if (key !== "||" && knownKeys.has(key)) {
-      skippedDuplicates += 1;
-      return;
-    }
-    if (key !== "||") knownKeys.add(key);
     imported.push(record);
   });
   if (!imported.length) {
-    const message = skippedDuplicates
-      ? `No se importaron registros nuevos. Ya existían ${skippedDuplicates} registros.`
-      : "No se encontraron registros para importar.";
-    $("importStatus").textContent = message;
-    return alert(message);
+    $("importStatus").textContent = "No se encontraron registros para importar.";
+    return alert("No se encontraron registros para importar.");
   }
   records = [...imported, ...records];
   await saveRecords();
-  $("importStatus").textContent = `Importados ${imported.length} registros nuevos. Ya existían ${skippedDuplicates}.`;
-  alert(`Importación correcta.\nRegistros nuevos importados: ${imported.length}\nRegistros ya existentes: ${skippedDuplicates}`);
+  $("importStatus").textContent = `Importados ${imported.length} registros. No se han descartado repetidos.`;
+  alert(`Importación correcta.\nRegistros importados: ${imported.length}\nNo se han descartado repetidos.`);
 }
 
 function defectFlag(selected, defect) {
@@ -1175,7 +799,7 @@ function defectFlag(selected, defect) {
 async function downloadExcel() {
   if (!window.ExcelJS) return alert("No se ha cargado el generador de Excel.");
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "Voz";
+  workbook.creator = "Correctivos";
   workbook.created = new Date();
   const sheet = workbook.addWorksheet("Extintores");
   const columns = [
@@ -1253,21 +877,17 @@ async function downloadExcel() {
   const blob = new Blob([await workbook.xlsx.writeBuffer()], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `Voz_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  a.download = `Correctivos_${new Date().toISOString().slice(0, 10)}.xlsx`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 function bindEvents() {
   $("openListBtn").addEventListener("click", () => showView("list"));
-  $("openCorrectivosBtn").addEventListener("click", () => showView("correctivos"));
-  $("openChecklistBtn").addEventListener("click", () => showView("checklist"));
   $("newRecordBtn").addEventListener("click", () => openForm());
   $("newRecordFromListBtn").addEventListener("click", () => openForm());
   $("downloadExcelBtn").addEventListener("click", downloadExcel);
   $("downloadExcelFromTableBtn").addEventListener("click", downloadExcel);
-  $("downloadCorrectivosWordBtn").addEventListener("click", downloadCorrectivosWord);
-  $("downloadChecklistBtn").addEventListener("click", downloadChecklist);
   $("clearRecordsBtn").addEventListener("click", clearAllRecords);
   $("viewTableFromFormBtn").addEventListener("click", () => showView("list"));
   $("voiceStartBtn").addEventListener("click", startVoiceInput);
