@@ -451,7 +451,7 @@ function correctivosWordHtml() {
     h1 { text-align: center; font-size: 20pt; margin: 18pt 0 18pt; font-weight: 700; }
     .client { text-align: center; font-size: 16pt; font-weight: 700; margin: 0 0 18pt; }
     .meta { color: #555; font-size: 9pt; text-align: right; margin: 0 0 10pt; }
-    h2 { color: #2f70c0; font-size: 14pt; margin: 22pt 0 6pt .2in; font-weight: 700; }
+    h2 { color: #8a1538; font-size: 14pt; margin: 22pt 0 6pt .2in; font-weight: 700; }
     table { border-collapse: collapse; width: 100%; margin: 0 0 22pt; table-layout: fixed; }
     th, td { border: 1px solid #000; padding: 2pt 5pt; vertical-align: top; line-height: 1.05; }
     th { background: #d9eaf7; text-align: left; font-weight: 700; }

@@ -1,11 +1,11 @@
 :root {
-  --red: #b45cff;
-  --red-dark: #a238f5;
-  --paper: #f5f3ff;
+  --red: #8a1538;
+  --red-dark: #6f102d;
+  --paper: #fff5f7;
   --card: #ffffff;
-  --ink: #21162f;
-  --muted: #6d6380;
-  --line: #ddd6fe;
+  --ink: #2f111b;
+  --muted: #7a5d66;
+  --line: #ead1d9;
 }
 
 * { box-sizing: border-box; }
@@ -85,7 +85,7 @@ h3 { margin: 0 0 14px; font-size: 22px; }
 }
 
 .stats div {
-  background: #f1edff;
+  background: #fae8ed;
   border-radius: 18px;
   padding: 16px;
 }
@@ -298,7 +298,7 @@ textarea { resize: vertical; }
 }
 
 .previewGroup strong {
-  color: #2f70c0;
+  color: #8a1538;
 }
 
 .previewGroup span,
@@ -352,7 +352,7 @@ th, td {
 }
 
 th {
-  background: #f1edff;
+  background: #fae8ed;
   color: #4c3b69;
   font-size: 13px;
   text-transform: uppercase;
@@ -386,7 +386,7 @@ th {
 .voiceBlock {
   display: grid;
   gap: 14px;
-  background: #f1edff;
+  background: #fae8ed;
   border: 1px solid var(--line);
   border-radius: 18px;
   padding: 16px;
@@ -433,7 +433,7 @@ label {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #f1edff;
+  background: #fae8ed;
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 12px;
@@ -463,7 +463,7 @@ label {
   place-items: center;
   border: 2px dashed #cfc7bf;
   border-radius: 20px;
-  background: #f1edff;
+  background: #fae8ed;
   color: #6d6380;
   cursor: pointer;
   overflow: hidden;
