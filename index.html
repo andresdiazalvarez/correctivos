@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#b45cff" />
     <title>Correctivos</title>
-    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v17" />
-    <link rel="stylesheet" href="styles.css?v=correctivos-v17" />
+    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v21" />
+    <link rel="stylesheet" href="styles.css?v=correctivos-v21" />
   </head>
   <body>
     <header class="topbar">
@@ -141,6 +141,22 @@
           <button id="downloadChecklistBtn" class="primary">Sacar checklist</button>
         </div>
 
+        <div class="reportRecord">
+          <div>
+            <h3>Retimbrados pendientes</h3>
+            <p>Calcula los extintores pendientes de retimbrar.</p>
+          </div>
+          <button id="openRetimbradosBtn" class="primary">Ver retimbrados pendientes</button>
+        </div>
+
+        <div class="reportRecord">
+          <div>
+            <h3>Extintores caducados</h3>
+            <p>Calcula los extintores con fecha de servicio caducada.</p>
+          </div>
+          <button id="openCaducadosBtn" class="primary">Ver extintores caducados</button>
+        </div>
+
         <div class="instructionBox">
           <h3>Instrucciones de relleno</h3>
           <p><strong>Cliente:</strong> cliente. edificio</p>
@@ -149,6 +165,60 @@
           <p><strong>Op. Realiza:</strong> Revisión, o Revisión y recarga cuando en observaciones se indique recarga o retimbrado.</p>
           <p><strong>Cadu 20 A:</strong> año de fabricación + 20.</p>
           <p><strong>Observaciones:</strong> en cada fila se ponen los correctivos señalados, por ejemplo: Sin señal. / Señal caducada. Si no hay correctivos queda en blanco.</p>
+        </div>
+      </section>
+
+      <section id="retimbradosView" class="hidden">
+        <button class="back" data-back="checklist">← Volver</button>
+        <p class="kicker">INFORMES</p>
+        <h2>Retimbrados pendientes</h2>
+        <p class="subtitle" id="retimbradosSummary">Calcula los extintores pendientes de retimbrar.</p>
+
+        <div class="reportRecord">
+          <div>
+            <h3>Listado Word</h3>
+            <p>Fabricación igual o inferior a 2021 y retimbrado entre 2008 y 2021.</p>
+          </div>
+          <button id="downloadRetimbradosWordBtn" class="primary">Descargar listado</button>
+        </div>
+
+        <div class="reportRecord">
+          <div>
+            <h3>Resumen económico</h3>
+            <p>Agrupa por modelo y deja casillas para precio, importe, total, IVA y total con IVA.</p>
+          </div>
+          <button id="downloadRetimbradosEconomicoWordBtn" class="primary">Descargar resumen económico</button>
+        </div>
+
+        <div class="reportRecord">
+          <div>
+            <h3>Extintores caducados</h3>
+            <p>Abre el listado de extintores caducados.</p>
+          </div>
+          <button id="openCaducadosFromRetimbradosBtn" class="primary">Ver extintores caducados</button>
+        </div>
+      </section>
+
+      <section id="caducadosView" class="hidden">
+        <button class="back" data-back="checklist">← Volver</button>
+        <p class="kicker">INFORMES</p>
+        <h2>Extintores caducados</h2>
+        <p class="subtitle" id="caducadosSummary">Calcula los extintores caducados.</p>
+
+        <div class="reportRecord">
+          <div>
+            <h3>Listado Word</h3>
+            <p>Extintores cuya fecha de fabricación más 20 años ya está caducada.</p>
+          </div>
+          <button id="downloadCaducadosWordBtn" class="primary">Descargar listado</button>
+        </div>
+
+        <div class="reportRecord">
+          <div>
+            <h3>Resumen económico</h3>
+            <p>Agrupa por modelo y deja casillas para precio, importe, total, IVA y total con IVA.</p>
+          </div>
+          <button id="downloadCaducadosEconomicoWordBtn" class="primary">Descargar resumen económico</button>
         </div>
       </section>
 
@@ -309,8 +379,8 @@
       </section>
     </main>
 
-    <script src="exceljs.min.js?v=correctivos-v17"></script>
-    <script src="seed-data.js?v=correctivos-v17"></script>
-    <script src="app.js?v=correctivos-v17"></script>
+    <script src="exceljs.min.js?v=correctivos-v21"></script>
+    <script src="seed-data.js?v=correctivos-v21"></script>
+    <script src="app.js?v=correctivos-v21"></script>
   </body>
 </html>

@@ -247,10 +247,14 @@ function showView(name) {
   $("listView").classList.toggle("hidden", name !== "list");
   $("correctivosView").classList.toggle("hidden", name !== "correctivos");
   $("checklistView").classList.toggle("hidden", name !== "checklist");
+  $("retimbradosView").classList.toggle("hidden", name !== "retimbrados");
+  $("caducadosView").classList.toggle("hidden", name !== "caducados");
   $("formView").classList.toggle("hidden", name !== "form");
   if (name === "list") renderTable();
   if (name === "correctivos") renderCorrectivos();
   if (name === "checklist") renderChecklist();
+  if (name === "retimbrados") renderRetimbrados();
+  if (name === "caducados") renderCaducados();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -477,6 +481,298 @@ function downloadCorrectivosWord() {
   a.download = `Correctivos_extintores_${new Date().toISOString().slice(0, 10)}.doc`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function pendingRetimbradoRecords() {
+  return records
+    .map(cleanRecord)
+    .filter((record) => {
+      const fabricacion = parseYear(record.fechaFabricacion);
+      const retimbrado = parseYear(record.fechaProximoRetimbrado);
+      return fabricacion !== null && retimbrado !== null && fabricacion <= 2021 && retimbrado >= 2008 && retimbrado <= 2021;
+    })
+    .sort((a, b) =>
+      compareText(a.edificio, b.edificio) ||
+      compareText(a.cantidad, b.cantidad) ||
+      compareText(a.numeroSerie, b.numeroSerie)
+    );
+}
+
+function updateRetimbradosSummary() {
+  const pending = pendingRetimbradoRecords();
+  const summary = $("retimbradosSummary");
+  if (summary) summary.textContent = pending.length
+    ? `${pending.length} extintores pendientes de retimbrar.`
+    : "No hay extintores pendientes de retimbrar con esos criterios.";
+  const button = $("downloadRetimbradosWordBtn");
+  if (button) button.disabled = !pending.length;
+  const economicButton = $("downloadRetimbradosEconomicoWordBtn");
+  if (economicButton) economicButton.disabled = !pending.length;
+}
+
+function renderRetimbrados() {
+  updateRetimbradosSummary();
+}
+
+function retimbradosWordHtml() {
+  const pending = pendingRetimbradoRecords();
+  const date = new Date().toLocaleDateString("es-ES");
+  const rows = pending.map((record) => `
+    <tr>
+      <td>${wordCell(record.edificio)}</td>
+      <td>${wordCell(record.cantidad)}</td>
+      <td>${wordCell(record.numeroSerie)}</td>
+      <td>${wordCell(record.modelo)}</td>
+      <td>${wordCell(record.fechaFabricacion)}</td>
+      <td>${wordCell(record.fechaProximoRetimbrado)}</td>
+    </tr>
+  `).join("");
+
+  return `<!doctype html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta charset="utf-8">
+  <title>EXTINTORES PENDIENTES DE RETIMBRADO</title>
+  <style>
+    @page { size: 8.5in 11in; margin: .65in .65in .65in .65in; }
+    body { font-family: Arial, Helvetica, sans-serif; color: #000; font-size: 10.5pt; }
+    h1 { text-align: center; font-size: 18pt; font-weight: 700; margin: 18pt 0 24pt; }
+    table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+    th, td { border: 1px solid #000; padding: 5pt 6pt; vertical-align: middle; line-height: 1.2; }
+    th { background: #d9eaf7; font-weight: 700; text-align: center; }
+    td { text-align: left; }
+    th:nth-child(1), td:nth-child(1) { width: 24%; }
+    th:nth-child(2), td:nth-child(2) { width: 14%; text-align: center; }
+    th:nth-child(3), td:nth-child(3) { width: 17%; text-align: center; }
+    th:nth-child(4), td:nth-child(4) { width: 17%; text-align: center; }
+    th:nth-child(5), td:nth-child(5) { width: 14%; text-align: center; }
+    th:nth-child(6), td:nth-child(6) { width: 14%; text-align: center; }
+    .date { text-align: right; margin-top: 28pt; font-size: 11pt; }
+  </style>
+</head>
+<body>
+  <h1><strong>EXTINTORES PENDIENTES DE RETIMBRADO</strong></h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Edificio</th>
+        <th>Número de extintor</th>
+        <th>Número de serie</th>
+        <th>Modelo</th>
+        <th>Fecha de fabricación</th>
+        <th>Fecha retimbrado</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <p class="date">${escapeHtml(date)}</p>
+</body>
+</html>`;
+}
+
+function modelSummary(recordsList) {
+  const groups = new Map();
+  for (const record of recordsList) {
+    const model = safeText(record.modelo).trim() || "Sin modelo";
+    groups.set(model, (groups.get(model) || 0) + 1);
+  }
+  return Array.from(groups, ([modelo, unidades]) => ({ modelo, unidades }))
+    .sort((a, b) => compareText(a.modelo, b.modelo));
+}
+
+function economicSummaryWordHtml(title, recordsList) {
+  const date = new Date().toLocaleDateString("es-ES");
+  const rows = modelSummary(recordsList).map((item) => `
+    <tr>
+      <td>${wordCell(item.unidades)}</td>
+      <td>${wordCell(item.modelo)}</td>
+      <td></td>
+      <td></td>
+    </tr>
+  `).join("");
+
+  return `<!doctype html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta charset="utf-8">
+  <title>${escapeHtml(title)}</title>
+  <style>
+    @page { size: 8.5in 11in; margin: .65in .65in .65in .65in; }
+    body { font-family: Arial, Helvetica, sans-serif; color: #000; font-size: 10.5pt; }
+    h1 { text-align: center; font-size: 18pt; font-weight: 700; margin: 18pt 0 24pt; }
+    table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+    th, td { border: 1px solid #000; padding: 6pt 7pt; vertical-align: middle; line-height: 1.2; height: 22pt; }
+    th { background: #d9eaf7; font-weight: 700; text-align: center; }
+    td { text-align: left; }
+    th:nth-child(1), td:nth-child(1) { width: 16%; text-align: center; }
+    th:nth-child(2), td:nth-child(2) { width: 40%; }
+    th:nth-child(3), td:nth-child(3) { width: 22%; text-align: right; }
+    th:nth-child(4), td:nth-child(4) { width: 22%; text-align: right; }
+    .totals { margin-left: auto; margin-top: 24pt; width: 45%; }
+    .totals td:first-child { font-weight: 700; background: #f1f1f1; }
+    .date { text-align: right; margin-top: 24pt; font-size: 11pt; }
+  </style>
+</head>
+<body>
+  <h1><strong>${escapeHtml(title)}</strong></h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Unidades</th>
+        <th>Modelo</th>
+        <th>Precio</th>
+        <th>Importe</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <table class="totals">
+    <tbody>
+      <tr><td>Total</td><td></td></tr>
+      <tr><td>IVA</td><td></td></tr>
+      <tr><td>Total con IVA</td><td></td></tr>
+    </tbody>
+  </table>
+  <p class="date">${escapeHtml(date)}</p>
+</body>
+</html>`;
+}
+
+function downloadEconomicWord(title, recordsList, filePrefix) {
+  if (!recordsList.length) {
+    alert("No hay registros para generar el resumen económico.");
+    return;
+  }
+  const blob = new Blob(["\ufeff", economicSummaryWordHtml(title, recordsList)], { type: "application/msword;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${filePrefix}_${new Date().toISOString().slice(0, 10)}.doc`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function downloadRetimbradosWord() {
+  const pending = pendingRetimbradoRecords();
+  if (!pending.length) {
+    alert("No hay extintores pendientes de retimbrar con esos criterios.");
+    return;
+  }
+  const blob = new Blob(["\ufeff", retimbradosWordHtml()], { type: "application/msword;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `Extintores_pendientes_retimbrado_${new Date().toISOString().slice(0, 10)}.doc`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function downloadRetimbradosEconomicoWord() {
+  downloadEconomicWord("RESUMEN ECONOMICO EXTINTORES PENDIENTES DE RETIMBRADO", pendingRetimbradoRecords(), "Resumen_economico_retimbrados");
+}
+
+function caducidadYear(record) {
+  const fabricacion = parseYear(record.fechaFabricacion);
+  return fabricacion === null ? null : fabricacion + 20;
+}
+
+function caducadosRecords() {
+  const currentYear = new Date().getFullYear();
+  return records
+    .map(cleanRecord)
+    .filter((record) => {
+      const caducidad = caducidadYear(record);
+      return caducidad !== null && caducidad <= currentYear;
+    })
+    .sort((a, b) =>
+      compareText(a.edificio, b.edificio) ||
+      compareText(a.cantidad, b.cantidad) ||
+      compareText(a.numeroSerie, b.numeroSerie)
+    );
+}
+
+function renderCaducados() {
+  const caducados = caducadosRecords();
+  const summary = $("caducadosSummary");
+  if (summary) summary.textContent = caducados.length
+    ? `${caducados.length} extintores caducados.`
+    : "No hay extintores caducados.";
+  const button = $("downloadCaducadosWordBtn");
+  if (button) button.disabled = !caducados.length;
+  const economicButton = $("downloadCaducadosEconomicoWordBtn");
+  if (economicButton) economicButton.disabled = !caducados.length;
+}
+
+function caducadosWordHtml() {
+  const caducados = caducadosRecords();
+  const date = new Date().toLocaleDateString("es-ES");
+  const rows = caducados.map((record) => `
+    <tr>
+      <td>${wordCell(record.edificio)}</td>
+      <td>${wordCell(record.cantidad)}</td>
+      <td>${wordCell(record.numeroSerie)}</td>
+      <td>${wordCell(record.modelo)}</td>
+      <td>${wordCell(record.fechaFabricacion)}</td>
+      <td>${wordCell(caducidadYear(record))}</td>
+    </tr>
+  `).join("");
+
+  return `<!doctype html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta charset="utf-8">
+  <title>RELACION DE EXTINTORES CADUCADOS</title>
+  <style>
+    @page { size: 8.5in 11in; margin: .65in .65in .65in .65in; }
+    body { font-family: Arial, Helvetica, sans-serif; color: #000; font-size: 10.5pt; }
+    h1 { text-align: center; font-size: 18pt; font-weight: 700; margin: 18pt 0 24pt; }
+    table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+    th, td { border: 1px solid #000; padding: 5pt 6pt; vertical-align: middle; line-height: 1.2; }
+    th { background: #d9eaf7; font-weight: 700; text-align: center; }
+    td { text-align: left; }
+    th:nth-child(1), td:nth-child(1) { width: 24%; }
+    th:nth-child(2), td:nth-child(2) { width: 14%; text-align: center; }
+    th:nth-child(3), td:nth-child(3) { width: 17%; text-align: center; }
+    th:nth-child(4), td:nth-child(4) { width: 17%; text-align: center; }
+    th:nth-child(5), td:nth-child(5) { width: 14%; text-align: center; }
+    th:nth-child(6), td:nth-child(6) { width: 14%; text-align: center; }
+    .date { text-align: right; margin-top: 28pt; font-size: 11pt; }
+  </style>
+</head>
+<body>
+  <h1><strong>RELACION DE EXTINTORES CADUCADOS</strong></h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Edificio</th>
+        <th>Número de extintor</th>
+        <th>Número de serie</th>
+        <th>Modelo</th>
+        <th>Fecha de fabricación</th>
+        <th>Caducidad 20 A</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <p class="date">${escapeHtml(date)}</p>
+</body>
+</html>`;
+}
+
+function downloadCaducadosWord() {
+  const caducados = caducadosRecords();
+  if (!caducados.length) {
+    alert("No hay extintores caducados.");
+    return;
+  }
+  const blob = new Blob(["\ufeff", caducadosWordHtml()], { type: "application/msword;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `Relacion_extintores_caducados_${new Date().toISOString().slice(0, 10)}.doc`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function downloadCaducadosEconomicoWord() {
+  downloadEconomicWord("RESUMEN ECONOMICO EXTINTORES CADUCADOS", caducadosRecords(), "Resumen_economico_caducados");
 }
 
 function checklistRecords() {
@@ -1318,12 +1614,19 @@ function bindEvents() {
   $("openListBtn").addEventListener("click", () => showView("list"));
   $("openCorrectivosBtn").addEventListener("click", () => showView("correctivos"));
   $("openChecklistBtn").addEventListener("click", () => showView("checklist"));
+  $("openRetimbradosBtn").addEventListener("click", () => showView("retimbrados"));
+  $("openCaducadosBtn").addEventListener("click", () => showView("caducados"));
+  $("openCaducadosFromRetimbradosBtn").addEventListener("click", () => showView("caducados"));
   $("newRecordBtn").addEventListener("click", () => openForm());
   $("newRecordFromListBtn").addEventListener("click", () => openForm());
   $("downloadExcelBtn").addEventListener("click", downloadExcel);
   $("downloadExcelFromTableBtn").addEventListener("click", downloadExcel);
   $("downloadCorrectivosWordBtn").addEventListener("click", downloadCorrectivosWord);
   $("downloadChecklistBtn").addEventListener("click", downloadChecklist);
+  $("downloadRetimbradosWordBtn").addEventListener("click", downloadRetimbradosWord);
+  $("downloadRetimbradosEconomicoWordBtn").addEventListener("click", downloadRetimbradosEconomicoWord);
+  $("downloadCaducadosWordBtn").addEventListener("click", downloadCaducadosWord);
+  $("downloadCaducadosEconomicoWordBtn").addEventListener("click", downloadCaducadosEconomicoWord);
   $("clearRecordsBtn").addEventListener("click", clearAllRecords);
   $("viewTableFromFormBtn").addEventListener("click", () => showView("list"));
   $("voiceStartBtn").addEventListener("click", startVoiceInput);
