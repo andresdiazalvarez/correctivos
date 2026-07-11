@@ -1,4 +1,4 @@
-const CACHE_NAME = "correctivos-v22-burdeos";
+const CACHE_NAME = "correctivos-v23-economico-excel";
 const ASSETS = [
   "./",
   "./index.html",

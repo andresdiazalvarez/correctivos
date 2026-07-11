@@ -580,73 +580,86 @@ function modelSummary(recordsList) {
     .sort((a, b) => compareText(a.modelo, b.modelo));
 }
 
-function economicSummaryWordHtml(title, recordsList) {
-  const date = new Date().toLocaleDateString("es-ES");
-  const rows = modelSummary(recordsList).map((item) => `
-    <tr>
-      <td>${wordCell(item.unidades)}</td>
-      <td>${wordCell(item.modelo)}</td>
-      <td></td>
-      <td></td>
-    </tr>
-  `).join("");
-
-  return `<!doctype html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-  <meta charset="utf-8">
-  <title>${escapeHtml(title)}</title>
-  <style>
-    @page { size: 8.5in 11in; margin: .65in .65in .65in .65in; }
-    body { font-family: Arial, Helvetica, sans-serif; color: #000; font-size: 10.5pt; }
-    h1 { text-align: center; font-size: 18pt; font-weight: 700; margin: 18pt 0 24pt; }
-    table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-    th, td { border: 1px solid #000; padding: 6pt 7pt; vertical-align: middle; line-height: 1.2; height: 22pt; }
-    th { background: #d9eaf7; font-weight: 700; text-align: center; }
-    td { text-align: left; }
-    th:nth-child(1), td:nth-child(1) { width: 16%; text-align: center; }
-    th:nth-child(2), td:nth-child(2) { width: 40%; }
-    th:nth-child(3), td:nth-child(3) { width: 22%; text-align: right; }
-    th:nth-child(4), td:nth-child(4) { width: 22%; text-align: right; }
-    .totals { margin-left: auto; margin-top: 24pt; width: 45%; }
-    .totals td:first-child { font-weight: 700; background: #f1f1f1; }
-    .date { text-align: right; margin-top: 24pt; font-size: 11pt; }
-  </style>
-</head>
-<body>
-  <h1><strong>${escapeHtml(title)}</strong></h1>
-  <table>
-    <thead>
-      <tr>
-        <th>Unidades</th>
-        <th>Modelo</th>
-        <th>Precio</th>
-        <th>Importe</th>
-      </tr>
-    </thead>
-    <tbody>${rows}</tbody>
-  </table>
-  <table class="totals">
-    <tbody>
-      <tr><td>Total</td><td></td></tr>
-      <tr><td>IVA</td><td></td></tr>
-      <tr><td>Total con IVA</td><td></td></tr>
-    </tbody>
-  </table>
-  <p class="date">${escapeHtml(date)}</p>
-</body>
-</html>`;
+function styleEconomicCell(cell, options = {}) {
+  cell.border = {
+    top: { style: "thin" },
+    left: { style: "thin" },
+    bottom: { style: "thin" },
+    right: { style: "thin" },
+  };
+  cell.alignment = { vertical: "middle", horizontal: options.align || "center", wrapText: true };
+  if (options.bold) cell.font = { bold: true };
+  if (options.fill) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: options.fill } };
 }
 
-function downloadEconomicWord(title, recordsList, filePrefix) {
+async function downloadEconomicExcel(title, recordsList, filePrefix) {
+  if (!window.ExcelJS) return alert("No se ha cargado el generador de Excel.");
   if (!recordsList.length) {
     alert("No hay registros para generar el resumen económico.");
     return;
   }
-  const blob = new Blob(["\ufeff", economicSummaryWordHtml(title, recordsList)], { type: "application/msword;charset=utf-8" });
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "Correctivos";
+  workbook.created = new Date();
+  workbook.calcProperties.fullCalcOnLoad = true;
+  const sheet = workbook.addWorksheet("Resumen económico");
+  sheet.columns = [
+    { key: "unidades", width: 18 },
+    { key: "modelo", width: 34 },
+    { key: "precio", width: 16 },
+    { key: "importe", width: 18 },
+  ];
+  sheet.mergeCells("A2:D2");
+  sheet.getCell("A2").value = title;
+  sheet.getCell("A2").font = { bold: true, size: 14 };
+  sheet.getCell("A2").alignment = { horizontal: "center", vertical: "middle" };
+  sheet.getRow(2).height = 24;
+
+  ["UNIDADES", "MODELO", "PRECIO", "IMPORTE"].forEach((header, index) => {
+    const cell = sheet.getRow(4).getCell(index + 1);
+    cell.value = header;
+    styleEconomicCell(cell, { bold: true, fill: "FFEAD1D9" });
+  });
+
+  const items = modelSummary(recordsList);
+  items.forEach((item, index) => {
+    const rowNumber = 5 + index;
+    const row = sheet.getRow(rowNumber);
+    row.getCell(1).value = item.unidades;
+    row.getCell(2).value = item.modelo;
+    row.getCell(3).value = "";
+    row.getCell(4).value = { formula: `A${rowNumber}*C${rowNumber}` };
+    row.getCell(3).numFmt = '#,##0.00 "€"';
+    row.getCell(4).numFmt = '#,##0.00 "€"';
+    [1, 2, 3, 4].forEach((col) => styleEconomicCell(row.getCell(col), { align: col === 2 ? "left" : "center" }));
+  });
+
+  const firstDataRow = 5;
+  const lastDataRow = Math.max(firstDataRow, firstDataRow + items.length - 1);
+  const totalRow = lastDataRow + 1;
+  const ivaRow = totalRow + 1;
+  const sumaRow = ivaRow + 1;
+  [
+    [totalRow, "TOTAL", `SUM(D${firstDataRow}:D${lastDataRow})`],
+    [ivaRow, "IVA", `D${totalRow}*21/100`],
+    [sumaRow, "SUMA TOTAL", `SUM(D${totalRow}:D${ivaRow})`],
+  ].forEach(([rowNumber, label, formula]) => {
+    const row = sheet.getRow(rowNumber);
+    row.getCell(3).value = label;
+    row.getCell(4).value = { formula };
+    row.getCell(4).numFmt = '#,##0.00 "€"';
+    styleEconomicCell(row.getCell(3), { bold: true, fill: "FFEAD1D9" });
+    styleEconomicCell(row.getCell(4), { bold: true });
+  });
+
+  sheet.getCell(`A${sumaRow + 2}`).value = new Date().toLocaleDateString("es-ES");
+  sheet.getCell(`A${sumaRow + 2}`).alignment = { horizontal: "right" };
+  sheet.mergeCells(`A${sumaRow + 2}:D${sumaRow + 2}`);
+  sheet.views = [{ state: "frozen", ySplit: 4 }];
+  const blob = new Blob([await workbook.xlsx.writeBuffer()], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `${filePrefix}_${new Date().toISOString().slice(0, 10)}.doc`;
+  a.download = `${filePrefix}_${new Date().toISOString().slice(0, 10)}.xlsx`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
@@ -666,7 +679,7 @@ function downloadRetimbradosWord() {
 }
 
 function downloadRetimbradosEconomicoWord() {
-  downloadEconomicWord("RESUMEN ECONOMICO EXTINTORES PENDIENTES DE RETIMBRADO", pendingRetimbradoRecords(), "Resumen_economico_retimbrados");
+  downloadEconomicExcel("EXTINTORES PENDIENTES DE RETIMBRADO", pendingRetimbradoRecords(), "Resumen_economico_retimbrados");
 }
 
 function caducidadYear(record) {
@@ -772,7 +785,7 @@ function downloadCaducadosWord() {
 }
 
 function downloadCaducadosEconomicoWord() {
-  downloadEconomicWord("RESUMEN ECONOMICO EXTINTORES CADUCADOS", caducadosRecords(), "Resumen_economico_caducados");
+  downloadEconomicExcel("RELACIÓN EXTINTORES CADUCADOS", caducadosRecords(), "Resumen_economico_caducados");
 }
 
 function checklistRecords() {
