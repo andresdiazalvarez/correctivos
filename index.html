@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#8a1538" />
     <title>Correctivos</title>
-    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v23-economico-excel" />
-    <link rel="stylesheet" href="styles.css?v=correctivos-v23-economico-excel" />
+    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v24-voz-syco" />
+    <link rel="stylesheet" href="styles.css?v=correctivos-v24-voz-syco" />
   </head>
   <body>
     <header class="topbar">
@@ -249,7 +249,13 @@
 
           <label>Cliente<input id="cliente" /></label>
           <label>Edificio<input id="edificio" /></label>
-          <label>Número SYCo<input id="cantidad" /></label>
+          <label>Número SYCo
+            <div class="fieldWithButton">
+              <input id="cantidad" />
+              <button type="button" id="voiceSycoBtn" class="iconTextButton">Dictar</button>
+            </div>
+            <span id="voiceSycoStatus" class="fieldHint"></span>
+          </label>
           <label>Ubicación<textarea id="ubicacion" rows="2"></textarea></label>
           <label>Modelo
             <input id="modelo" list="modelosExtintor" placeholder="Escribe o elige modelo" />
@@ -379,8 +385,8 @@
       </section>
     </main>
 
-    <script src="exceljs.min.js?v=correctivos-v23-economico-excel"></script>
-    <script src="seed-data.js?v=correctivos-v23-economico-excel"></script>
-    <script src="app.js?v=correctivos-v23-economico-excel"></script>
+    <script src="exceljs.min.js?v=correctivos-v24-voz-syco"></script>
+    <script src="seed-data.js?v=correctivos-v24-voz-syco"></script>
+    <script src="app.js?v=correctivos-v24-voz-syco"></script>
   </body>
 </html>

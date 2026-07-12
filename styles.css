@@ -231,6 +231,39 @@ input, textarea, select {
 
 textarea { resize: vertical; }
 
+.fieldWithButton {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.fieldWithButton input {
+  min-width: 0;
+}
+
+.iconTextButton {
+  width: 100%;
+  background: var(--red);
+  color: #fff;
+  border-radius: 14px;
+  padding: 0 12px;
+  font-size: 15px;
+  margin: 0;
+}
+
+.iconTextButton:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.fieldHint {
+  min-height: 18px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 750;
+}
+
 .listActions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -498,7 +531,7 @@ label {
   .lastNumberBox {
     text-align: left;
   }
-  .stats, .compactFilters, .listActions, .reportRecord, .checks, .actions, .photoGrid, .voiceActions {
+  .stats, .compactFilters, .listActions, .reportRecord, .checks, .actions, .photoGrid, .voiceActions, .fieldWithButton {
     grid-template-columns: 1fr;
   }
 }

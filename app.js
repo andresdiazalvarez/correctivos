@@ -38,6 +38,9 @@ let currentPhotos = ["", ""];
 let voiceRecognition = null;
 let voiceStep = "numero";
 let voiceActive = false;
+let sycoVoiceRecognition = null;
+let sycoVoiceActive = false;
+let sycoVoiceParts = [];
 
 const $ = (id) => document.getElementById(id);
 
@@ -1341,6 +1344,80 @@ function getSpeechRecognition() {
   return window.SpeechRecognition || window.webkitSpeechRecognition || null;
 }
 
+function setSycoVoiceStatus(message) {
+  const status = $("voiceSycoStatus");
+  if (status) status.textContent = message;
+}
+
+function extractSycoVoiceDigits(text) {
+  const normalized = normalizeSpeechText(text).replace(/\bok\b/g, " ").trim();
+  if (!normalized) return "";
+  return speechToNumberValue(normalized).replace(/\D/g, "");
+}
+
+function finishSycoVoiceInput(showMessage = true) {
+  sycoVoiceActive = false;
+  if (sycoVoiceRecognition) {
+    try {
+      sycoVoiceRecognition.stop();
+    } catch {}
+  }
+  const value = sycoVoiceParts.join("");
+  if (value) $("cantidad").value = value;
+  $("voiceSycoBtn").disabled = false;
+  $("voiceSycoBtn").textContent = "Dictar";
+  if (showMessage) setSycoVoiceStatus(value ? `Número anotado: ${value}` : "No se ha reconocido ningún número.");
+}
+
+function handleSycoVoiceText(text) {
+  const normalized = normalizeSpeechText(text);
+  const hasOk = /\bok\b/.test(normalized);
+  const digits = extractSycoVoiceDigits(text);
+  if (digits) sycoVoiceParts.push(digits);
+  const preview = sycoVoiceParts.join("");
+  setSycoVoiceStatus(preview ? `Escuchando: ${preview}. Di ok para terminar.` : "Escuchando. Di cifras y termina con ok.");
+  if (hasOk) finishSycoVoiceInput(true);
+}
+
+function startSycoVoiceInput() {
+  if (sycoVoiceActive) {
+    finishSycoVoiceInput();
+    return;
+  }
+  const SpeechRecognition = getSpeechRecognition();
+  if (!SpeechRecognition) {
+    setSycoVoiceStatus("Este navegador no permite voz. Prueba con Chrome o Edge.");
+    return;
+  }
+  stopVoiceInput(false);
+  sycoVoiceParts = [];
+  sycoVoiceActive = true;
+  sycoVoiceRecognition = new SpeechRecognition();
+  sycoVoiceRecognition.lang = "es-ES";
+  sycoVoiceRecognition.continuous = true;
+  sycoVoiceRecognition.interimResults = false;
+  sycoVoiceRecognition.onresult = (event) => {
+    for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      if (event.results[index].isFinal) handleSycoVoiceText(event.results[index][0].transcript);
+    }
+  };
+  sycoVoiceRecognition.onerror = () => setSycoVoiceStatus("No he podido escuchar bien. Pulsa Dictar otra vez.");
+  sycoVoiceRecognition.onend = () => {
+    if (sycoVoiceActive) {
+      try {
+        sycoVoiceRecognition.start();
+      } catch {}
+      return;
+    }
+    $("voiceSycoBtn").disabled = false;
+    $("voiceSycoBtn").textContent = "Dictar";
+  };
+  $("voiceSycoBtn").disabled = false;
+  $("voiceSycoBtn").textContent = "Parar";
+  setSycoVoiceStatus("Escuchando. Di cifras y termina con ok.");
+  sycoVoiceRecognition.start();
+}
+
 function startVoiceInput() {
   const SpeechRecognition = getSpeechRecognition();
   if (!SpeechRecognition) {
@@ -1348,6 +1425,7 @@ function startVoiceInput() {
     return;
   }
 
+  if (sycoVoiceActive) finishSycoVoiceInput(false);
   if (voiceRecognition) voiceRecognition.stop();
   voiceStep = "numero";
   voiceActive = true;
@@ -1644,6 +1722,7 @@ function bindEvents() {
   $("viewTableFromFormBtn").addEventListener("click", () => showView("list"));
   $("voiceStartBtn").addEventListener("click", startVoiceInput);
   $("voiceStopBtn").addEventListener("click", () => stopVoiceInput());
+  $("voiceSycoBtn").addEventListener("click", startSycoVoiceInput);
   $("importExcelBtn").addEventListener("click", () => $("importExcelInput").click());
   $("importExcelInput").addEventListener("change", async (event) => {
     const file = event.target.files?.[0];
