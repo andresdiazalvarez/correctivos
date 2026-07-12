@@ -41,6 +41,7 @@ let voiceActive = false;
 let sycoVoiceRecognition = null;
 let sycoVoiceActive = false;
 let sycoVoiceParts = [];
+let sycoVoiceDraft = "";
 
 const $ = (id) => document.getElementById(id);
 
@@ -1362,7 +1363,7 @@ function finishSycoVoiceInput(showMessage = true) {
       sycoVoiceRecognition.stop();
     } catch {}
   }
-  const value = sycoVoiceParts.join("");
+  const value = sycoVoiceDraft || sycoVoiceParts.join("");
   if (value) $("cantidad").value = value;
   $("voiceSycoBtn").disabled = false;
   $("voiceSycoBtn").textContent = "Dictar";
@@ -1373,8 +1374,12 @@ function handleSycoVoiceText(text) {
   const normalized = normalizeSpeechText(text);
   const hasOk = /\bok\b/.test(normalized);
   const digits = extractSycoVoiceDigits(text);
-  if (digits) sycoVoiceParts.push(digits);
-  const preview = sycoVoiceParts.join("");
+  if (digits) {
+    sycoVoiceParts.push(digits);
+    sycoVoiceDraft = `${sycoVoiceDraft}${digits}`;
+    $("cantidad").value = sycoVoiceDraft;
+  }
+  const preview = sycoVoiceDraft || sycoVoiceParts.join("");
   setSycoVoiceStatus(preview ? `Escuchando: ${preview}. Di ok para terminar.` : "Escuchando. Di cifras y termina con ok.");
   if (hasOk) finishSycoVoiceInput(true);
 }
@@ -1391,6 +1396,8 @@ function startSycoVoiceInput() {
   }
   stopVoiceInput(false);
   sycoVoiceParts = [];
+  sycoVoiceDraft = "";
+  $("cantidad").value = "";
   sycoVoiceActive = true;
   sycoVoiceRecognition = new SpeechRecognition();
   sycoVoiceRecognition.lang = "es-ES";
