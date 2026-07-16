@@ -42,6 +42,10 @@ let sycoVoiceRecognition = null;
 let sycoVoiceActive = false;
 let sycoVoiceParts = [];
 let sycoVoiceDraft = "";
+let serieVoiceRecognition = null;
+let serieVoiceActive = false;
+let serieVoiceParts = [];
+let serieVoiceDraft = "";
 
 const $ = (id) => document.getElementById(id);
 
@@ -189,6 +193,57 @@ function rowToImportedRecord(rowValues, index, headerMap = {}) {
     visto: truthyExcelValue(importedValue(rowValues, headerMap, ["visto"], 0)),
     origen: "importado",
   });
+}
+
+function uint8ToBase64(bytes) {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function workbookImageToDataUrl(workbook, imageId) {
+  const image = typeof workbook.getImage === "function"
+    ? workbook.getImage(imageId)
+    : workbook.model?.media?.find((item) => item.index === imageId || item.imageId === imageId);
+  if (!image) return "";
+  const extension = safeText(image.extension || image.type || "jpeg").replace(/^\./, "").toLowerCase() || "jpeg";
+  const mime = extension === "png" ? "image/png" : extension === "gif" ? "image/gif" : "image/jpeg";
+  if (image.base64) {
+    return image.base64.startsWith("data:") ? image.base64 : `data:${mime};base64,${image.base64}`;
+  }
+  const buffer = image.buffer || image.data;
+  if (!buffer) return "";
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  return `data:${mime};base64,${uint8ToBase64(bytes)}`;
+}
+
+function imageTopLeft(image) {
+  const tl = image.range?.tl || image.range?.topLeft || {};
+  const row = Number.isFinite(tl.nativeRow) ? tl.nativeRow + 1 : Math.floor(Number(tl.row || 0)) + 1;
+  const col = Number.isFinite(tl.nativeCol) ? tl.nativeCol + 1 : Math.floor(Number(tl.col || 0)) + 1;
+  return { row, col };
+}
+
+function importedPhotosByRow(workbook, sheet, headerMap) {
+  const photosByRow = new Map();
+  if (typeof sheet.getImages !== "function") return photosByRow;
+  const foto1Col = headerMap.foto1 || headerMap.foto || 21;
+  const foto2Col = headerMap.foto2 || 22;
+  for (const image of sheet.getImages()) {
+    const { row, col } = imageTopLeft(image);
+    if (row <= 1) continue;
+    const photoIndex = col === foto1Col ? 0 : col === foto2Col ? 1 : -1;
+    if (photoIndex < 0) continue;
+    const dataUrl = workbookImageToDataUrl(workbook, image.imageId);
+    if (!dataUrl) continue;
+    const photos = photosByRow.get(row) || ["", ""];
+    photos[photoIndex] = dataUrl;
+    photosByRow.set(row, photos);
+  }
+  return photosByRow;
 }
 
 function openDatabase() {
@@ -1395,6 +1450,7 @@ function startSycoVoiceInput() {
     return;
   }
   stopVoiceInput(false);
+  if (serieVoiceActive) finishSerieVoiceInput(false);
   sycoVoiceParts = [];
   sycoVoiceDraft = "";
   $("cantidad").value = "";
@@ -1425,6 +1481,87 @@ function startSycoVoiceInput() {
   sycoVoiceRecognition.start();
 }
 
+function setSerieVoiceStatus(message) {
+  const status = $("voiceSerieStatus");
+  if (status) status.textContent = message;
+}
+
+function extractSerieVoiceDigits(text) {
+  const normalized = normalizeSpeechText(text).replace(/\bok\b/g, " ").trim();
+  if (!normalized) return "";
+  return speechToNumberValue(normalized).replace(/\D/g, "");
+}
+
+function finishSerieVoiceInput(showMessage = true) {
+  serieVoiceActive = false;
+  if (serieVoiceRecognition) {
+    try {
+      serieVoiceRecognition.stop();
+    } catch {}
+  }
+  const value = serieVoiceDraft || serieVoiceParts.join("");
+  if (value) $("numeroSerie").value = value;
+  $("voiceSerieBtn").disabled = false;
+  $("voiceSerieBtn").textContent = "Dictar";
+  if (showMessage) setSerieVoiceStatus(value ? `Serie anotada: ${value}` : "No se ha reconocido ningun numero de serie.");
+}
+
+function handleSerieVoiceText(text) {
+  const normalized = normalizeSpeechText(text);
+  const hasOk = /\bok\b/.test(normalized);
+  const digits = extractSerieVoiceDigits(text);
+  if (digits) {
+    serieVoiceParts.push(digits);
+    serieVoiceDraft = `${serieVoiceDraft}${digits}`;
+    $("numeroSerie").value = serieVoiceDraft;
+  }
+  const preview = serieVoiceDraft || serieVoiceParts.join("");
+  setSerieVoiceStatus(preview ? `Escuchando: ${preview}. Di ok para terminar.` : "Escuchando. Di cifras y termina con ok.");
+  if (hasOk) finishSerieVoiceInput(true);
+}
+
+function startSerieVoiceInput() {
+  if (serieVoiceActive) {
+    finishSerieVoiceInput();
+    return;
+  }
+  const SpeechRecognition = getSpeechRecognition();
+  if (!SpeechRecognition) {
+    setSerieVoiceStatus("Este navegador no permite voz. Prueba con Chrome o Edge.");
+    return;
+  }
+  stopVoiceInput(false);
+  if (sycoVoiceActive) finishSycoVoiceInput(false);
+  serieVoiceParts = [];
+  serieVoiceDraft = "";
+  $("numeroSerie").value = "";
+  serieVoiceActive = true;
+  serieVoiceRecognition = new SpeechRecognition();
+  serieVoiceRecognition.lang = "es-ES";
+  serieVoiceRecognition.continuous = true;
+  serieVoiceRecognition.interimResults = false;
+  serieVoiceRecognition.onresult = (event) => {
+    for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      if (event.results[index].isFinal) handleSerieVoiceText(event.results[index][0].transcript);
+    }
+  };
+  serieVoiceRecognition.onerror = () => setSerieVoiceStatus("No he podido escuchar bien. Pulsa Dictar otra vez.");
+  serieVoiceRecognition.onend = () => {
+    if (serieVoiceActive) {
+      try {
+        serieVoiceRecognition.start();
+      } catch {}
+      return;
+    }
+    $("voiceSerieBtn").disabled = false;
+    $("voiceSerieBtn").textContent = "Dictar";
+  };
+  $("voiceSerieBtn").disabled = false;
+  $("voiceSerieBtn").textContent = "Parar";
+  setSerieVoiceStatus("Escuchando. Di cifras y termina con ok.");
+  serieVoiceRecognition.start();
+}
+
 function startVoiceInput() {
   const SpeechRecognition = getSpeechRecognition();
   if (!SpeechRecognition) {
@@ -1433,6 +1570,7 @@ function startVoiceInput() {
   }
 
   if (sycoVoiceActive) finishSycoVoiceInput(false);
+  if (serieVoiceActive) finishSerieVoiceInput(false);
   if (voiceRecognition) voiceRecognition.stop();
   voiceStep = "numero";
   voiceActive = true;
@@ -1577,6 +1715,15 @@ function mergeImportedIntoExisting(existing, imported) {
     existing.visto = true;
     changed = true;
   }
+  const existingPhotos = Array.isArray(existing.photos) ? existing.photos : ["", ""];
+  const importedPhotos = Array.isArray(imported.photos) ? imported.photos : ["", ""];
+  for (let index = 0; index < 2; index += 1) {
+    if (!existingPhotos[index] && importedPhotos[index]) {
+      existingPhotos[index] = importedPhotos[index];
+      changed = true;
+    }
+  }
+  existing.photos = existingPhotos;
   return changed;
 }
 
@@ -1591,9 +1738,11 @@ async function importExcelFile(file) {
   let skippedDuplicates = 0;
   let updatedDuplicates = 0;
   const headerMap = buildHeaderMap(sheet.getRow(1).values);
+  const photosByRow = importedPhotosByRow(workbook, sheet, headerMap);
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return;
     const record = rowToImportedRecord(row.values, rowNumber, headerMap);
+    record.photos = photosByRow.get(rowNumber) || ["", ""];
     const hasData = [record.edificio, record.cantidad, record.ubicacion, record.modelo, record.numeroSerie].some((value) => safeText(value).trim());
     if (!hasData) return;
     const key = recordKey(record);
@@ -1730,6 +1879,7 @@ function bindEvents() {
   $("voiceStartBtn").addEventListener("click", startVoiceInput);
   $("voiceStopBtn").addEventListener("click", () => stopVoiceInput());
   $("voiceSycoBtn").addEventListener("click", startSycoVoiceInput);
+  $("voiceSerieBtn").addEventListener("click", startSerieVoiceInput);
   $("importExcelBtn").addEventListener("click", () => $("importExcelInput").click());
   $("importExcelInput").addEventListener("change", async (event) => {
     const file = event.target.files?.[0];

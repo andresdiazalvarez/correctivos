@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#8a1538" />
     <title>Correctivos</title>
-    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v26-degradado" />
-    <link rel="stylesheet" href="styles.css?v=correctivos-v26-degradado" />
+    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v28-excel-fotos" />
+    <link rel="stylesheet" href="styles.css?v=correctivos-v28-excel-fotos" />
   </head>
   <body>
     <header class="topbar">
@@ -275,7 +275,13 @@
               <option value="ABC 100 KG"></option>
             </datalist>
           </label>
-          <label>Nº serie<input id="numeroSerie" /></label>
+          <label>N&ordm; serie
+            <div class="fieldWithButton">
+              <input id="numeroSerie" />
+              <button type="button" id="voiceSerieBtn" class="iconTextButton">Dictar</button>
+            </div>
+            <span id="voiceSerieStatus" class="fieldHint"></span>
+          </label>
           <label>Fecha / año fabricación
             <select id="fechaFabricacion">
               <option value=""></option>
@@ -385,8 +391,8 @@
       </section>
     </main>
 
-    <script src="exceljs.min.js?v=correctivos-v26-degradado"></script>
-    <script src="seed-data.js?v=correctivos-v26-degradado"></script>
-    <script src="app.js?v=correctivos-v26-degradado"></script>
+    <script src="exceljs.min.js?v=correctivos-v28-excel-fotos"></script>
+    <script src="seed-data.js?v=correctivos-v28-excel-fotos"></script>
+    <script src="app.js?v=correctivos-v28-excel-fotos"></script>
   </body>
 </html>
