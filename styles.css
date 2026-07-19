@@ -158,6 +158,17 @@ button {
   border: 1px solid #f3b9b9;
 }
 
+.homeCorrectivosLine {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.homeCorrectivosLine .secondary,
+.homeCorrectivosLine .danger {
+  margin-top: 10px;
+}
+
 .back {
   background: rgba(255, 225, 238, .9);
   border: 1px solid var(--line);
@@ -538,7 +549,7 @@ label {
   .lastNumberBox {
     text-align: left;
   }
-  .stats, .compactFilters, .listActions, .reportRecord, .checks, .actions, .photoGrid, .voiceActions, .fieldWithButton {
+  .stats, .compactFilters, .listActions, .homeCorrectivosLine, .reportRecord, .checks, .actions, .photoGrid, .voiceActions, .fieldWithButton {
     grid-template-columns: 1fr;
   }
 }

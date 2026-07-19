@@ -1773,6 +1773,20 @@ async function clearAllRecords() {
   alert("Registros eliminados. Ya puedes importar otro cliente.");
 }
 
+async function clearFinishedReports() {
+  if (!records.length) {
+    alert("No hay informes terminados para limpiar.");
+    return;
+  }
+  if (!confirm("Â¿Seguro que quieres limpiar los informes terminados de Correctivos? Solo se borrarÃ¡n los datos guardados en esta app.")) return;
+  records = [];
+  localStorage.removeItem(LAST_NUMBER_KEY);
+  await saveRecords();
+  renderTable();
+  showView("home");
+  alert("Informes terminados limpiados en Correctivos.");
+}
+
 function mergeImportedIntoExisting(existing, imported) {
   let changed = false;
   for (const key of fields) {
@@ -1950,6 +1964,7 @@ function bindEvents() {
   $("downloadCaducadosWordBtn").addEventListener("click", downloadCaducadosWord);
   $("downloadCaducadosEconomicoWordBtn").addEventListener("click", downloadCaducadosEconomicoWord);
   $("clearRecordsBtn").addEventListener("click", clearAllRecords);
+  $("clearFinishedReportsBtn").addEventListener("click", clearFinishedReports);
   $("viewTableFromFormBtn").addEventListener("click", () => showView("list"));
   $("voiceStartBtn").addEventListener("click", startVoiceInput);
   $("voiceStopBtn").addEventListener("click", () => stopVoiceInput());
