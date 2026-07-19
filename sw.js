@@ -1,4 +1,4 @@
-const CACHE_NAME = "correctivos-v33-boton-cabecera";
+const CACHE_NAME = "correctivos-v34-boton-texto-oscuro";
 const ASSETS = [
   "./",
   "./index.html",
