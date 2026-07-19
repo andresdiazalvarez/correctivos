@@ -39,6 +39,23 @@ body {
 
 .brand img { width: 52px; height: 52px; }
 
+.neonCleanButton {
+  width: auto;
+  margin-left: auto;
+  margin-top: 0;
+  background: #39ff14;
+  color: #143000;
+  border: 2px solid #b6ff00;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-size: 15px;
+  box-shadow: 0 0 18px rgba(57, 255, 20, .55);
+}
+
+.neonCleanButton:hover {
+  background: #b6ff00;
+}
+
 main {
   max-width: 1080px;
   margin: 0 auto;
@@ -156,17 +173,6 @@ button {
   background: #fff1f1;
   color: #b00020;
   border: 1px solid #f3b9b9;
-}
-
-.homeCorrectivosLine {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.homeCorrectivosLine .secondary,
-.homeCorrectivosLine .danger {
-  margin-top: 10px;
 }
 
 .back {
@@ -549,7 +555,14 @@ label {
   .lastNumberBox {
     text-align: left;
   }
-  .stats, .compactFilters, .listActions, .homeCorrectivosLine, .reportRecord, .checks, .actions, .photoGrid, .voiceActions, .fieldWithButton {
+  .stats, .compactFilters, .listActions, .reportRecord, .checks, .actions, .photoGrid, .voiceActions, .fieldWithButton {
     grid-template-columns: 1fr;
+  }
+  .brand {
+    flex-wrap: wrap;
+  }
+  .neonCleanButton {
+    width: 100%;
+    margin-left: 0;
   }
 }

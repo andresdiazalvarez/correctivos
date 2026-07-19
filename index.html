@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#8a1538" />
     <title>Correctivos</title>
-    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v32-limpiar-informes" />
-    <link rel="stylesheet" href="styles.css?v=correctivos-v32-limpiar-informes" />
+    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v33-boton-cabecera" />
+    <link rel="stylesheet" href="styles.css?v=correctivos-v33-boton-cabecera" />
   </head>
   <body>
     <header class="topbar">
       <div class="brand">
         <img src="icon.svg" alt="" />
         <span>Correctivos</span>
+        <button id="clearFinishedReportsBtn" class="neonCleanButton">Limpiar informes terminados</button>
       </div>
     </header>
 
@@ -37,10 +38,7 @@
           <p id="importStatus" class="importStatus"></p>
           <button id="newRecordBtn" class="secondary">Meter dato nuevo</button>
           <button id="downloadExcelBtn" class="secondary">Descargar Excel</button>
-          <div class="homeCorrectivosLine">
-            <button id="openCorrectivosBtn" class="secondary grayButton">Correctivos</button>
-            <button id="clearFinishedReportsBtn" class="danger">Limpiar informes terminados</button>
-          </div>
+          <button id="openCorrectivosBtn" class="secondary grayButton">Correctivos</button>
           <button id="openChecklistBtn" class="secondary grayButton">Checklist</button>
         </div>
       </section>
@@ -394,8 +392,8 @@
       </section>
     </main>
 
-    <script src="exceljs.min.js?v=correctivos-v32-limpiar-informes"></script>
-    <script src="seed-data.js?v=correctivos-v32-limpiar-informes"></script>
-    <script src="app.js?v=correctivos-v32-limpiar-informes"></script>
+    <script src="exceljs.min.js?v=correctivos-v33-boton-cabecera"></script>
+    <script src="seed-data.js?v=correctivos-v33-boton-cabecera"></script>
+    <script src="app.js?v=correctivos-v33-boton-cabecera"></script>
   </body>
 </html>
