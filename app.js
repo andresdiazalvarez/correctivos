@@ -118,17 +118,92 @@ function normalizeHeader(value) {
     .replace(/[^a-z0-9]/g, "");
 }
 
+function headerWords(value) {
+  return safeText(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[ÂºÂ°]/g, "o")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+const importFieldAliases = {
+  cliente: ["cliente", "client", "nombrecliente", "empresa", "titular", "razonsocial"],
+  edificio: ["edificio", "edif", "centro", "instalacion", "dependencia", "local", "zona", "emplazamiento"],
+  cantidad: ["numero syco", "n syco", "nº syco", "numerosyco", "numsyco", "nosyco", "syco", "numero de extintor", "numero extintor", "numextintor", "num", "numero", "numequipo", "numero equipo", "numero de equipo"],
+  ubicacion: ["ubicacion", "situacion", "localizacion", "emplazamientoequipo", "lugar", "zonaubicacion"],
+  modelo: ["modelo", "tipo", "clase", "descripcion", "tipomodelo"],
+  numeroSerie: ["n serie", "nº serie", "no serie", "numero serie", "numero de serie", "noserie", "nserie", "numeroserie", "serie", "numserie", "noserial", "serial", "placa", "n placa", "nº placa", "numero placa", "numero de placa", "noplaca", "numeroplaca"],
+  fechaFabricacion: ["fecha ano fabricacion", "fecha año fabricacion", "fecha de fabricacion", "fechaanofabricacion", "fechafabricacion", "ano fabricacion", "año fabricacion", "anofabricacion", "fabricacion", "fabrica", "fabricado", "fechaalta"],
+  fechaProximoRetimbrado: ["fecha retimbrado", "fecha de retimbrado", "retimbrado", "retimbre", "ultimo retimbrado", "fecha ultimo retimbrado", "fecharetimbrado", "ultimoretimbrado", "fechaultimoretimbrado", "proxretimbrado"],
+  observaciones: ["observaciones", "observacion", "obs", "comentarios", "notas", "incidencias"],
+  senal: ["senal", "senial", "anosenal", "fechasenal"],
+  defectos: ["defectosencontrados", "defectos", "defecto", "correctivos", "correctivo", "anomalias", "incidenciasdetectadas"],
+  visto: ["visto", "revisado", "ok", "realizado"],
+  foto1: ["foto1", "foto", "imagen1", "imagen", "fotografia1"],
+  foto2: ["foto2", "imagen2", "fotografia2"],
+};
+
+function headerMatchScore(header, aliases) {
+  const key = normalizeHeader(header);
+  if (!key) return 0;
+  const words = headerWords(header);
+  let best = 0;
+  for (const alias of aliases) {
+    const aliasKey = normalizeHeader(alias);
+    if (!aliasKey) continue;
+    if (key === aliasKey) best = Math.max(best, 100);
+    if (key.includes(aliasKey) && aliasKey.length >= 4) best = Math.max(best, 88);
+    if (aliasKey.includes(key) && key.length >= 4) best = Math.max(best, 76);
+    const aliasWords = headerWords(alias);
+    const matches = aliasWords.filter((word) => words.includes(word)).length;
+    if (aliasWords.length && matches === aliasWords.length) best = Math.max(best, 84);
+    else if (matches) best = Math.max(best, 45 + matches * 12);
+  }
+  return best;
+}
+
+function bestHeaderColumn(headers, aliases, usedColumns = new Set()) {
+  let best = { col: 0, score: 0 };
+  for (const header of headers) {
+    if (usedColumns.has(header.col)) continue;
+    const score = headerMatchScore(header.text, aliases);
+    if (score > best.score) best = { col: header.col, score };
+  }
+  return best.score >= 70 ? best : { col: 0, score: 0 };
+}
+
 function buildHeaderMap(rowValues) {
   const map = {};
+  const headers = [];
   for (let col = 1; col < rowValues.length; col += 1) {
-    const key = normalizeHeader(excelCellToText(rowValues[col]));
+    const text = excelCellToText(rowValues[col]);
+    const key = normalizeHeader(text);
     if (key) map[key] = col;
+    if (key) headers.push({ col, text, key });
   }
+  const usedColumns = new Set();
+  let matchedCount = 0;
+  for (const [field, aliases] of Object.entries(importFieldAliases)) {
+    const exactCol = aliases.map((alias) => map[normalizeHeader(alias)]).find(Boolean);
+    const match = exactCol ? { col: exactCol, score: 100 } : bestHeaderColumn(headers, aliases, usedColumns);
+    if (!match.col) continue;
+    map[field] = match.col;
+    map[normalizeHeader(field)] = match.col;
+    usedColumns.add(match.col);
+    matchedCount += 1;
+  }
+  map.__hasUsefulHeaders = matchedCount >= 2;
+  map.__matchedCount = matchedCount;
   return map;
 }
 
 function importedValue(rowValues, headerMap, keys, fallbackCol) {
-  const col = keys.map((key) => headerMap[key]).find(Boolean) || fallbackCol;
+  const col = keys.map((key) => headerMap[key] || headerMap[normalizeHeader(key)]).find(Boolean)
+    || (headerMap.__hasUsefulHeaders ? 0 : fallbackCol);
   return excelCellToText(rowValues[col]);
 }
 
@@ -181,12 +256,12 @@ function rowToImportedRecord(rowValues, index, headerMap = {}) {
     id: `import-${Date.now()}-${index}-${Math.random().toString(16).slice(2)}`,
     cliente: importedValue(rowValues, headerMap, ["cliente"], 1),
     edificio: importedValue(rowValues, headerMap, ["edificio"], 2),
-    cantidad: importedValue(rowValues, headerMap, ["numerosyco", "numero", "num"], 3),
+    cantidad: importedValue(rowValues, headerMap, ["cantidad", "numerosyco", "numero", "num"], 3),
     ubicacion: importedValue(rowValues, headerMap, ["ubicacion"], 4),
     modelo: importedValue(rowValues, headerMap, ["modelo"], 5),
-    numeroSerie: importedValue(rowValues, headerMap, ["noserie", "numeroserie", "serie"], 6),
-    fechaFabricacion: importedValue(rowValues, headerMap, ["fechaanofabricacion", "fechafabricacion", "fabricacion"], 7),
-    fechaProximoRetimbrado: importedValue(rowValues, headerMap, ["fecharetimbrado", "retimbrado"], 8),
+    numeroSerie: importedValue(rowValues, headerMap, ["numeroSerie", "noserie", "numeroserie", "serie"], 6),
+    fechaFabricacion: importedValue(rowValues, headerMap, ["fechaFabricacion", "fechaanofabricacion", "fechafabricacion", "fabricacion"], 7),
+    fechaProximoRetimbrado: importedValue(rowValues, headerMap, ["fechaProximoRetimbrado", "fecharetimbrado", "retimbrado"], 8),
     observaciones: importedValue(rowValues, headerMap, ["observaciones", "observacion"], 9),
     senal: importedValue(rowValues, headerMap, ["senal"], 10),
     defectos: importedDefects(rowValues, headerMap),
