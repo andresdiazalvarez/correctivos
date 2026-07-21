@@ -253,6 +253,12 @@ input, textarea, select {
   box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
 }
 
+.dateChoice,
+.smallYearList option,
+select option {
+  font-size: 80%;
+}
+
 textarea { resize: vertical; }
 
 .fieldWithButton {
@@ -418,6 +424,25 @@ th {
 
 .ok { color: #16703a; }
 .pending { color: #a15a00; }
+
+.seenToggle {
+  min-width: 64px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.seenYes {
+  background: #d8ffe0;
+  color: #064d1d;
+  border: 1px solid #59c878;
+}
+
+.seenNo {
+  background: #fff4c7;
+  color: #6f4300;
+  border: 1px solid #e0aa28;
+}
 
 .editBtn {
   background: var(--red);

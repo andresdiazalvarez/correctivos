@@ -432,6 +432,12 @@ function renderTable() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${safeText(record.cliente) || "-"}</td>
+      <td>
+        <button class="seenToggle ${record.visto ? "seenYes" : "seenNo"}" data-seen="${record.id}" type="button">
+          ${record.visto ? "Si" : "No"}
+        </button>
+      </td>
+      <td><button class="editBtn" data-edit="${record.id}">Ver / corregir</button></td>
       <td>${safeText(record.edificio) || "-"}</td>
       <td><strong>${safeText(record.cantidad) || "-"}</strong></td>
       <td>${safeText(record.ubicacion) || "-"}</td>
@@ -444,14 +450,23 @@ function renderTable() {
       <td>${defects}</td>
       <td>${photo1}</td>
       <td>${photo2}</td>
-      <td><span class="${record.visto ? "ok" : "pending"}">${record.visto ? "Sí" : "No"}</span></td>
-      <td><button class="editBtn" data-edit="${record.id}">Ver / corregir</button></td>
     `;
     body.appendChild(tr);
   }
   body.querySelectorAll("[data-edit]").forEach((button) => {
     button.addEventListener("click", () => openForm(button.dataset.edit));
   });
+  body.querySelectorAll("[data-seen]").forEach((button) => {
+    button.addEventListener("click", () => toggleRecordSeen(button.dataset.seen));
+  });
+}
+
+async function toggleRecordSeen(id) {
+  const record = records.find((item) => item.id === id);
+  if (!record) return;
+  record.visto = !record.visto;
+  await saveRecords();
+  renderTable();
 }
 
 function reportDefectText(defect) {
@@ -1332,19 +1347,24 @@ function speechToYear(text) {
 }
 
 function setSelectValue(id, value) {
-  const select = $(id);
+  const field = $(id);
   const cleanValue = safeText(value).trim();
-  const option = Array.from(select.options).find((item) => item.value === cleanValue);
+  if (!field) return;
+  if (!field.options) {
+    field.value = cleanValue;
+    return;
+  }
+  const option = Array.from(field.options).find((item) => item.value === cleanValue);
   if (option) {
-    select.value = cleanValue;
+    field.value = cleanValue;
     return;
   }
   if (/^\d{4}$/.test(cleanValue)) {
-    select.add(new Option(cleanValue, cleanValue));
-    select.value = cleanValue;
+    field.add(new Option(cleanValue, cleanValue));
+    field.value = cleanValue;
     return;
   }
-  select.value = "";
+  field.value = "";
 }
 
 function setVoiceStatus(message) {

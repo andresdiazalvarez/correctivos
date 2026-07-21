@@ -1,4 +1,4 @@
-const CACHE_NAME = "correctivos-v34-boton-texto-oscuro";
+const CACHE_NAME = "correctivos-v37-fechas-escribibles";
 const ASSETS = [
   "./",
   "./index.html",

@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#8a1538" />
     <title>Correctivos</title>
-    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v34-boton-texto-oscuro" />
-    <link rel="stylesheet" href="styles.css?v=correctivos-v34-boton-texto-oscuro" />
+    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v37-fechas-escribibles" />
+    <link rel="stylesheet" href="styles.css?v=correctivos-v37-fechas-escribibles" />
   </head>
   <body>
     <header class="topbar">
@@ -49,9 +49,9 @@
         <h2>Listado</h2>
 
         <div class="compactFilters">
-          <label>Edificio<input id="filterEdificio" type="search" placeholder="Filtrar edificio" /></label>
-          <label>Número SYCo<input id="filterNumero" type="search" placeholder="Filtrar número" /></label>
-          <label>Nº serie<input id="filterSerie" type="search" placeholder="Filtrar serie" /></label>
+          <label>Edificio<input id="filterEdificio" type="search" placeholder="Filtrar edificio" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
+          <label>Número SYCo<input id="filterNumero" type="search" placeholder="Filtrar número" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
+          <label>Nº serie<input id="filterSerie" type="search" placeholder="Filtrar serie" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
           <label>Ordenar
             <select id="sortOrder">
               <option value="none">Sin ordenar</option>
@@ -78,6 +78,8 @@
             <thead>
               <tr>
                 <th>Cliente</th>
+                <th>Visto</th>
+                <th>Ver / corregir</th>
                 <th>Edificio</th>
                 <th>Número SYCo</th>
                 <th>Ubicación</th>
@@ -90,8 +92,6 @@
                 <th>Defectos</th>
                 <th>Foto 1</th>
                 <th>Foto 2</th>
-                <th>Visto</th>
-                <th></th>
               </tr>
             </thead>
             <tbody id="recordsBody"></tbody>
@@ -234,7 +234,7 @@
         <p class="kicker" id="formKicker">REGISTRO</p>
         <h2 id="formTitle">Editar extintor</h2>
 
-        <form id="recordForm" class="card formCard">
+        <form id="recordForm" class="card formCard" autocomplete="off">
           <input type="hidden" id="recordId" />
 
           <div class="voiceBlock">
@@ -248,18 +248,18 @@
             </div>
           </div>
 
-          <label>Cliente<input id="cliente" /></label>
-          <label>Edificio<input id="edificio" /></label>
+          <label>Cliente<input id="cliente" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
+          <label>Edificio<input id="edificio" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
           <label>Número SYCo
             <div class="fieldWithButton">
-              <input id="cantidad" />
+              <input id="cantidad" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
               <button type="button" id="voiceSycoBtn" class="iconTextButton">Dictar</button>
             </div>
             <span id="voiceSycoStatus" class="fieldHint"></span>
           </label>
-          <label>Ubicación<textarea id="ubicacion" rows="2"></textarea></label>
+          <label>Ubicación<textarea id="ubicacion" rows="2" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea></label>
           <label>Modelo
-            <input id="modelo" list="modelosExtintor" placeholder="Escribe o elige modelo" />
+            <input id="modelo" list="modelosExtintor" placeholder="Escribe o elige modelo" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
             <datalist id="modelosExtintor">
               <option value=""></option>
               <option value="ABC 6 KG"></option>
@@ -278,13 +278,14 @@
           </label>
           <label>N&ordm; serie
             <div class="fieldWithButton">
-              <input id="numeroSerie" />
+              <input id="numeroSerie" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
               <button type="button" id="voiceSerieBtn" class="iconTextButton">Dictar</button>
             </div>
             <span id="voiceSerieStatus" class="fieldHint"></span>
           </label>
           <label>Fecha / año fabricación
-            <select id="fechaFabricacion">
+            <input id="fechaFabricacion" class="dateChoice" list="fabricacionYears" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+            <datalist id="fabricacionYears" class="smallYearList">
               <option value=""></option>
               <option value="2005">2005</option>
               <option value="2006">2006</option>
@@ -308,10 +309,11 @@
               <option value="2024">2024</option>
               <option value="2025">2025</option>
               <option value="2026">2026</option>
-            </select>
+            </datalist>
           </label>
           <label>Fecha retimbrado
-            <select id="fechaProximoRetimbrado">
+            <input id="fechaProximoRetimbrado" class="dateChoice" list="retimbradoYears" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+            <datalist id="retimbradoYears" class="smallYearList">
               <option value=""></option>
               <option value="2010">2010</option>
               <option value="2011">2011</option>
@@ -330,9 +332,9 @@
               <option value="2024">2024</option>
               <option value="2025">2025</option>
               <option value="2026">2026</option>
-            </select>
+            </datalist>
           </label>
-          <label>Observaciones<textarea id="observaciones" rows="3"></textarea></label>
+          <label>Observaciones<textarea id="observaciones" rows="3" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea></label>
           <label>Señal
             <select id="senal">
               <option value="">Sin indicar</option>
@@ -392,8 +394,8 @@
       </section>
     </main>
 
-    <script src="exceljs.min.js?v=correctivos-v34-boton-texto-oscuro"></script>
-    <script src="seed-data.js?v=correctivos-v34-boton-texto-oscuro"></script>
-    <script src="app.js?v=correctivos-v34-boton-texto-oscuro"></script>
+    <script src="exceljs.min.js?v=correctivos-v37-fechas-escribibles"></script>
+    <script src="seed-data.js?v=correctivos-v37-fechas-escribibles"></script>
+    <script src="app.js?v=correctivos-v37-fechas-escribibles"></script>
   </body>
 </html>
