@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#8a1538" />
     <title>Correctivos</title>
-    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v37-fechas-escribibles" />
-    <link rel="stylesheet" href="styles.css?v=correctivos-v37-fechas-escribibles" />
+    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v38-tabla-fechas-persiana" />
+    <link rel="stylesheet" href="styles.css?v=correctivos-v38-tabla-fechas-persiana" />
   </head>
   <body>
     <header class="topbar">
@@ -77,11 +77,11 @@
           <table>
             <thead>
               <tr>
-                <th>Cliente</th>
+                <th>Número SYCo</th>
                 <th>Visto</th>
                 <th>Ver / corregir</th>
                 <th>Edificio</th>
-                <th>Número SYCo</th>
+                <th>Cliente</th>
                 <th>Ubicación</th>
                 <th>Modelo</th>
                 <th>Nº serie</th>
@@ -284,55 +284,10 @@
             <span id="voiceSerieStatus" class="fieldHint"></span>
           </label>
           <label>Fecha / año fabricación
-            <input id="fechaFabricacion" class="dateChoice" list="fabricacionYears" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-            <datalist id="fabricacionYears" class="smallYearList">
-              <option value=""></option>
-              <option value="2005">2005</option>
-              <option value="2006">2006</option>
-              <option value="2007">2007</option>
-              <option value="2008">2008</option>
-              <option value="2009">2009</option>
-              <option value="2010">2010</option>
-              <option value="2011">2011</option>
-              <option value="2012">2012</option>
-              <option value="2013">2013</option>
-              <option value="2014">2014</option>
-              <option value="2015">2015</option>
-              <option value="2016">2016</option>
-              <option value="2017">2017</option>
-              <option value="2018">2018</option>
-              <option value="2019">2019</option>
-              <option value="2020">2020</option>
-              <option value="2021">2021</option>
-              <option value="2022">2022</option>
-              <option value="2023">2023</option>
-              <option value="2024">2024</option>
-              <option value="2025">2025</option>
-              <option value="2026">2026</option>
-            </datalist>
+            <select id="fechaFabricacion" class="dateChoice"></select>
           </label>
           <label>Fecha retimbrado
-            <input id="fechaProximoRetimbrado" class="dateChoice" list="retimbradoYears" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-            <datalist id="retimbradoYears" class="smallYearList">
-              <option value=""></option>
-              <option value="2010">2010</option>
-              <option value="2011">2011</option>
-              <option value="2012">2012</option>
-              <option value="2013">2013</option>
-              <option value="2014">2014</option>
-              <option value="2015">2015</option>
-              <option value="2016">2016</option>
-              <option value="2017">2017</option>
-              <option value="2018">2018</option>
-              <option value="2019">2019</option>
-              <option value="2020">2020</option>
-              <option value="2021">2021</option>
-              <option value="2022">2022</option>
-              <option value="2023">2023</option>
-              <option value="2024">2024</option>
-              <option value="2025">2025</option>
-              <option value="2026">2026</option>
-            </datalist>
+            <select id="fechaProximoRetimbrado" class="dateChoice"></select>
           </label>
           <label>Observaciones<textarea id="observaciones" rows="3" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea></label>
           <label>Señal
@@ -394,8 +349,8 @@
       </section>
     </main>
 
-    <script src="exceljs.min.js?v=correctivos-v37-fechas-escribibles"></script>
-    <script src="seed-data.js?v=correctivos-v37-fechas-escribibles"></script>
-    <script src="app.js?v=correctivos-v37-fechas-escribibles"></script>
+    <script src="exceljs.min.js?v=correctivos-v38-tabla-fechas-persiana"></script>
+    <script src="seed-data.js?v=correctivos-v38-tabla-fechas-persiana"></script>
+    <script src="app.js?v=correctivos-v38-tabla-fechas-persiana"></script>
   </body>
 </html>

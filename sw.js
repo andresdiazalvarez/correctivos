@@ -1,4 +1,4 @@
-const CACHE_NAME = "correctivos-v37-fechas-escribibles";
+const CACHE_NAME = "correctivos-v38-tabla-fechas-persiana";
 const ASSETS = [
   "./",
   "./index.html",

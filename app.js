@@ -431,7 +431,7 @@ function renderTable() {
     const photo2 = record.photos[1] ? `<img class="tablePhoto" src="${record.photos[1]}" alt="Foto 2">` : `<span class="noPhoto">—</span>`;
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${safeText(record.cliente) || "-"}</td>
+      <td><strong>${safeText(record.cantidad) || "-"}</strong></td>
       <td>
         <button class="seenToggle ${record.visto ? "seenYes" : "seenNo"}" data-seen="${record.id}" type="button">
           ${record.visto ? "Si" : "No"}
@@ -439,7 +439,7 @@ function renderTable() {
       </td>
       <td><button class="editBtn" data-edit="${record.id}">Ver / corregir</button></td>
       <td>${safeText(record.edificio) || "-"}</td>
-      <td><strong>${safeText(record.cantidad) || "-"}</strong></td>
+      <td>${safeText(record.cliente) || "-"}</td>
       <td>${safeText(record.ubicacion) || "-"}</td>
       <td>${safeText(record.modelo) || "-"}</td>
       <td>${safeText(record.numeroSerie) || "-"}</td>
@@ -1367,6 +1367,20 @@ function setSelectValue(id, value) {
   field.value = "";
 }
 
+function fillYearSelect(id, startYear, endYear) {
+  const select = $(id);
+  if (!select) return;
+  select.innerHTML = `<option value=""></option>`;
+  for (let year = startYear; year >= endYear; year -= 1) {
+    select.add(new Option(String(year), String(year)));
+  }
+}
+
+function initDateSelects() {
+  fillYearSelect("fechaFabricacion", 2026, 1999);
+  fillYearSelect("fechaProximoRetimbrado", 2026, 2010);
+}
+
 function setVoiceStatus(message) {
   const status = $("voiceStatus");
   if (status) status.textContent = message;
@@ -2034,6 +2048,7 @@ if ("serviceWorker" in navigator) {
 }
 
 async function init() {
+  initDateSelects();
   await loadRecords();
   bindEvents();
   updateStats();

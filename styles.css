@@ -254,8 +254,7 @@ input, textarea, select {
 }
 
 .dateChoice,
-.smallYearList option,
-select option {
+.dateChoice option {
   font-size: 80%;
 }
 
