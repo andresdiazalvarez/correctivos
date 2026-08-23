@@ -400,6 +400,8 @@ function filteredRecords() {
   const filterEdificio = $("filterEdificio").value.trim().toLowerCase();
   const filterNumero = $("filterNumero").value.trim().toLowerCase();
   const filterSerie = $("filterSerie").value.trim().toLowerCase();
+  const filterFabricacion = $("filterFabricacion").value.trim().toLowerCase();
+  const filterRetimbrado = $("filterRetimbrado").value.trim().toLowerCase();
   const seenFilter = $("seenFilter").value;
   const sortOrder = $("sortOrder").value;
 
@@ -409,6 +411,8 @@ function filteredRecords() {
     if (filterEdificio && ![record.edificio, record.ubicacion].join(" ").toLowerCase().includes(filterEdificio)) return false;
     if (filterNumero && !safeText(record.cantidad).toLowerCase().includes(filterNumero)) return false;
     if (filterSerie && !safeText(record.numeroSerie).toLowerCase().includes(filterSerie)) return false;
+    if (filterFabricacion && !safeText(record.fechaFabricacion).toLowerCase().includes(filterFabricacion)) return false;
+    if (filterRetimbrado && !safeText(record.fechaProximoRetimbrado).toLowerCase().includes(filterRetimbrado)) return false;
     return true;
   });
 
@@ -2020,7 +2024,7 @@ function bindEvents() {
       event.target.value = "";
     }
   });
-  ["filterEdificio", "filterNumero", "filterSerie", "sortOrder", "seenFilter"].forEach((id) => {
+  ["filterEdificio", "filterNumero", "filterSerie", "filterFabricacion", "filterRetimbrado", "sortOrder", "seenFilter"].forEach((id) => {
     $(id).addEventListener("input", renderTable);
     $(id).addEventListener("change", renderTable);
   });

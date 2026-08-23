@@ -1,4 +1,4 @@
-const CACHE_NAME = "correctivos-v38-tabla-fechas-persiana";
+const CACHE_NAME = "correctivos-v39-filtros-fechas";
 const ASSETS = [
   "./",
   "./index.html",

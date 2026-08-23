@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#8a1538" />
     <title>Correctivos</title>
-    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v38-tabla-fechas-persiana" />
-    <link rel="stylesheet" href="styles.css?v=correctivos-v38-tabla-fechas-persiana" />
+    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v39-filtros-fechas" />
+    <link rel="stylesheet" href="styles.css?v=correctivos-v39-filtros-fechas" />
   </head>
   <body>
     <header class="topbar">
@@ -45,13 +45,15 @@
 
       <section id="listView" class="hidden">
         <button class="back" data-back="home">← Volver</button>
-        <p class="kicker">REGISTROS</p>
-        <h2>Listado</h2>
 
         <div class="compactFilters">
           <label>Edificio<input id="filterEdificio" type="search" placeholder="Filtrar edificio" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
           <label>Número SYCo<input id="filterNumero" type="search" placeholder="Filtrar número" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
           <label>Nº serie<input id="filterSerie" type="search" placeholder="Filtrar serie" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
+          <div class="dateFilterPair">
+            <label>Fabricación<input id="filterFabricacion" type="search" placeholder="Ej. 21" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
+            <label>Retimbrado<input id="filterRetimbrado" type="search" placeholder="Ej. 2021" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
+          </div>
           <label>Ordenar
             <select id="sortOrder">
               <option value="none">Sin ordenar</option>
@@ -349,8 +351,8 @@
       </section>
     </main>
 
-    <script src="exceljs.min.js?v=correctivos-v38-tabla-fechas-persiana"></script>
-    <script src="seed-data.js?v=correctivos-v38-tabla-fechas-persiana"></script>
-    <script src="app.js?v=correctivos-v38-tabla-fechas-persiana"></script>
+    <script src="exceljs.min.js?v=correctivos-v39-filtros-fechas"></script>
+    <script src="seed-data.js?v=correctivos-v39-filtros-fechas"></script>
+    <script src="app.js?v=correctivos-v39-filtros-fechas"></script>
   </body>
 </html>

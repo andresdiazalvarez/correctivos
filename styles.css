@@ -224,9 +224,16 @@ button {
 
 .compactFilters {
   display: grid;
-  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  grid-template-columns: repeat(7, minmax(100px, 1fr));
   gap: 10px;
   margin: 6px 0 14px;
+}
+
+.dateFilterPair {
+  display: grid;
+  grid-column: span 2;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
 .compactFilters label {
@@ -581,6 +588,9 @@ label {
   }
   .stats, .compactFilters, .listActions, .reportRecord, .checks, .actions, .photoGrid, .voiceActions, .fieldWithButton {
     grid-template-columns: 1fr;
+  }
+  .dateFilterPair {
+    grid-column: span 1;
   }
   .brand {
     flex-wrap: wrap;
