@@ -432,22 +432,25 @@ th {
 .pending { color: #a15a00; }
 
 .seenToggle {
-  min-width: 64px;
-  padding: 10px 12px;
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  padding: 0;
+  border-radius: 8px;
   font-size: 14px;
+  font-weight: 900;
 }
 
 .seenYes {
-  background: #d8ffe0;
-  color: #064d1d;
-  border: 1px solid #59c878;
+  background: #79ed9a;
+  color: #053e18;
+  border: 2px solid #159447;
 }
 
 .seenNo {
-  background: #ffd6e8;
-  color: #72143f;
-  border: 1px solid #e86b9e;
+  background: #f58bb8;
+  color: #5d0a30;
+  border: 2px solid #c92f71;
 }
 
 .editBtn {
