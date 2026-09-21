@@ -1,4 +1,4 @@
-const CACHE_NAME = "correctivos-v42-retimbrado-cargado";
+const CACHE_NAME = "correctivos-v43-cuadro-visto";
 const ASSETS = [
   "./",
   "./index.html",

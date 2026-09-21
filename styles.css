@@ -546,8 +546,41 @@ label {
   height: 22px;
 }
 
-.seenLine input { accent-color: #e23f87; }
-.seenLine input:checked { accent-color: #169447; }
+.seenLine input {
+  appearance: none;
+  -webkit-appearance: none;
+  display: grid;
+  place-content: center;
+  flex: 0 0 22px;
+  margin: 0;
+  background: #f05b9a;
+  border: 2px solid #a91c59;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color .2s ease, border-color .2s ease;
+}
+
+.seenLine input::before {
+  content: "";
+  width: 10px;
+  height: 6px;
+  border-left: 3px solid #ffffff;
+  border-bottom: 3px solid #ffffff;
+  opacity: 0;
+  transform: translateY(-1px) rotate(-45deg);
+}
+
+.seenLine input:checked {
+  background: #169447;
+  border-color: #075d2a;
+}
+
+.seenLine input:checked::before { opacity: 1; }
+
+.seenLine input:focus-visible {
+  outline: 3px solid rgba(76, 59, 105, .35);
+  outline-offset: 2px;
+}
 
 .photoGrid {
   display: grid;
