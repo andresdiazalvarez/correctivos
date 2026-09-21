@@ -445,9 +445,9 @@ th {
 }
 
 .seenNo {
-  background: #fff4c7;
-  color: #6f4300;
-  border: 1px solid #e0aa28;
+  background: #ffd6e8;
+  color: #72143f;
+  border: 1px solid #e86b9e;
 }
 
 .editBtn {
@@ -527,11 +527,27 @@ label {
   padding: 12px;
 }
 
+.seenLine {
+  background: #ffd6e8;
+  color: #72143f;
+  border-color: #e86b9e;
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+}
+
+.seenLine:has(input:checked) {
+  background: #d8ffe0;
+  color: #064d1d;
+  border-color: #59c878;
+}
+
 .checkItem input,
 .seenLine input {
   width: 22px;
   height: 22px;
 }
+
+.seenLine input { accent-color: #e23f87; }
+.seenLine input:checked { accent-color: #169447; }
 
 .photoGrid {
   display: grid;

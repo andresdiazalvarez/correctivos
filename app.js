@@ -15,6 +15,8 @@ const defectOptions = [
   "Sin señal.",
   "Señal caducada.",
   "Extintor en mal estado.",
+  "Extintor retimbrado.",
+  "Extintor cargado.",
 ];
 
 const reportDefectLabels = {
@@ -245,6 +247,8 @@ function importedDefects(rowValues, headerMap) {
     ["sinsenal", "Sin señal."],
     ["senalcaducada", "Señal caducada."],
     ["extintorenmalestado", "Extintor en mal estado."],
+    ["extintorretimbrado", "Extintor retimbrado."],
+    ["extintorcargado", "Extintor cargado."],
   ];
   for (const [key, defect] of flagColumns) {
     const col = headerMap[key];
@@ -1928,6 +1932,8 @@ async function downloadExcel() {
     ["defectoSinSenal", "Sin señal", 16],
     ["defectoSenalCaducada", "Señal caducada", 20],
     ["defectoMalEstado", "Extintor en mal estado", 24],
+    ["defectoRetimbrado", "Extintor retimbrado", 22],
+    ["defectoCargado", "Extintor cargado", 20],
     ["foto1", "Foto 1", 22],
     ["foto2", "Foto 2", 22],
     ["visto", "Visto", 10],
@@ -1953,6 +1959,8 @@ async function downloadExcel() {
       defectoSinSenal: defectFlag(selected, "Sin señal."),
       defectoSenalCaducada: defectFlag(selected, "Señal caducada."),
       defectoMalEstado: defectFlag(selected, "Extintor en mal estado."),
+      defectoRetimbrado: defectFlag(selected, "Extintor retimbrado."),
+      defectoCargado: defectFlag(selected, "Extintor cargado."),
       foto1: record.photos[0] ? "Foto 1" : "",
       foto2: record.photos[1] ? "Foto 2" : "",
       visto: record.visto ? "Sí" : "No",
@@ -1962,7 +1970,8 @@ async function downloadExcel() {
       const photo = record.photos[photoIndex];
       if (!photo) return;
       const imageId = workbook.addImage({ base64: photo, extension: "jpeg" });
-      const col = photoIndex === 0 ? 20 : 21;
+      const photo1Column = columns.findIndex(([key]) => key === "foto1");
+      const col = photo1Column + photoIndex;
       sheet.addImage(imageId, { tl: { col, row: row.number - 1 }, ext: { width: 120, height: 85 }, editAs: "oneCell" });
     });
   }
