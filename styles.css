@@ -448,6 +448,22 @@ th {
 #recordsBody td:nth-child(9),
 #recordsBody td:nth-child(10) { min-width: 150px; }
 
+.retimbradoAlert {
+  min-width: 82px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 10px;
+  box-sizing: border-box;
+  background: #ff1744;
+  color: #ffffff;
+  border: 2px solid #b90025;
+  border-radius: 6px;
+  box-shadow: 0 0 0 3px rgba(255, 23, 68, .2);
+  font-weight: 900;
+}
+
 .ok { color: #16703a; }
 .pending { color: #a15a00; }
 

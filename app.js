@@ -437,6 +437,16 @@ function renderTable() {
   }
   for (const record of rows) {
     const defects = record.defectos.length ? record.defectos.join(" / ") : "-";
+    const retimbradoText = safeText(record.fechaProximoRetimbrado).trim();
+    const hasRetimbrado = Boolean(retimbradoText && !/^[—-]+$/.test(retimbradoText));
+    const retimbradoYear = parseYear(retimbradoText);
+    const fabricacionYear = parseYear(record.fechaFabricacion);
+    const highlightRetimbrado = hasRetimbrado
+      ? retimbradoYear !== null && retimbradoYear <= 2021
+      : fabricacionYear !== null && fabricacionYear < 2021;
+    const retimbradoValue = highlightRetimbrado
+      ? `<span class="retimbradoAlert" aria-label="Retimbrado pendiente">${hasRetimbrado ? retimbradoText : "&nbsp;"}</span>`
+      : hasRetimbrado ? retimbradoText : "-";
     const photo1 = record.photos[0] ? `<img class="tablePhoto" src="${record.photos[0]}" alt="Foto 1">` : `<span class="noPhoto">—</span>`;
     const photo2 = record.photos[1] ? `<img class="tablePhoto" src="${record.photos[1]}" alt="Foto 2">` : `<span class="noPhoto">—</span>`;
     const tr = document.createElement("tr");
@@ -454,7 +464,7 @@ function renderTable() {
       <td>${safeText(record.modelo) || "-"}</td>
       <td>${safeText(record.numeroSerie) || "-"}</td>
       <td>${safeText(record.fechaFabricacion) || "-"}</td>
-      <td>${safeText(record.fechaProximoRetimbrado) || "-"}</td>
+      <td>${retimbradoValue}</td>
       <td>${safeText(record.observaciones) || "-"}</td>
       <td>${safeText(record.senal) || "-"}</td>
       <td>${defects}</td>

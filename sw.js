@@ -1,4 +1,4 @@
-const CACHE_NAME = "correctivos-v46-pellizco-tabla";
+const CACHE_NAME = "correctivos-v47-alerta-retimbrado";
 const ASSETS = [
   "./",
   "./index.html",
