@@ -401,6 +401,8 @@ textarea { resize: vertical; }
 
 .tableWrap {
   overflow: auto;
+  touch-action: pan-x pan-y pinch-zoom;
+  -webkit-overflow-scrolling: touch;
   background: rgba(255, 255, 255, .38);
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -427,6 +429,21 @@ th {
   text-transform: uppercase;
   letter-spacing: .04em;
 }
+
+#recordsBody td:nth-child(7),
+#recordsBody td:nth-child(8),
+#recordsBody td:nth-child(9),
+#recordsBody td:nth-child(10) {
+  font-size: 200%;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+#recordsBody td:nth-child(7),
+#recordsBody td:nth-child(8) { min-width: 180px; }
+
+#recordsBody td:nth-child(9),
+#recordsBody td:nth-child(10) { min-width: 150px; }
 
 .ok { color: #16703a; }
 .pending { color: #a15a00; }
