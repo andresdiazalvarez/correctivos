@@ -401,13 +401,16 @@ textarea { resize: vertical; }
 
 .tableWrap {
   overflow: auto;
-  touch-action: pan-x pan-y pinch-zoom;
+  touch-action: pan-x pan-y;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   background: rgba(255, 255, 255, .38);
   border: 1px solid var(--line);
   border-radius: 18px;
   margin-top: 18px;
 }
+
+.tableWrap table { touch-action: pan-x pan-y; }
 
 table {
   border-collapse: collapse;

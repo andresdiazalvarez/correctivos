@@ -471,6 +471,56 @@ function renderTable() {
   });
 }
 
+function initTablePinchZoom() {
+  const wrapper = document.querySelector("#listView .tableWrap");
+  const table = wrapper?.querySelector("table");
+  if (!wrapper || !table) return;
+
+  let currentZoom = 1;
+  let startZoom = 1;
+  let startDistance = 0;
+  let contentPoint = { x: 0, y: 0 };
+
+  const touchDistance = (touches) => Math.hypot(
+    touches[0].clientX - touches[1].clientX,
+    touches[0].clientY - touches[1].clientY,
+  );
+
+  const touchCenter = (touches) => ({
+    x: (touches[0].clientX + touches[1].clientX) / 2,
+    y: (touches[0].clientY + touches[1].clientY) / 2,
+  });
+
+  wrapper.addEventListener("touchstart", (event) => {
+    if (event.touches.length !== 2) return;
+    event.preventDefault();
+    startDistance = touchDistance(event.touches);
+    startZoom = currentZoom;
+    const center = touchCenter(event.touches);
+    const rect = wrapper.getBoundingClientRect();
+    contentPoint = {
+      x: (wrapper.scrollLeft + center.x - rect.left) / currentZoom,
+      y: (wrapper.scrollTop + center.y - rect.top) / currentZoom,
+    };
+  }, { passive: false });
+
+  wrapper.addEventListener("touchmove", (event) => {
+    if (event.touches.length !== 2 || !startDistance) return;
+    event.preventDefault();
+    const nextZoom = Math.min(3, Math.max(.6, startZoom * touchDistance(event.touches) / startDistance));
+    const center = touchCenter(event.touches);
+    const rect = wrapper.getBoundingClientRect();
+    table.style.zoom = String(nextZoom);
+    currentZoom = nextZoom;
+    wrapper.scrollLeft = contentPoint.x * currentZoom - (center.x - rect.left);
+    wrapper.scrollTop = contentPoint.y * currentZoom - (center.y - rect.top);
+  }, { passive: false });
+
+  wrapper.addEventListener("touchend", (event) => {
+    if (event.touches.length < 2) startDistance = 0;
+  });
+}
+
 async function toggleRecordSeen(id) {
   const record = records.find((item) => item.id === id);
   if (!record) return;
@@ -2068,6 +2118,7 @@ async function init() {
   initDateSelects();
   await loadRecords();
   bindEvents();
+  initTablePinchZoom();
   updateStats();
 }
 
