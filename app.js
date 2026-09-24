@@ -56,6 +56,14 @@ function safeText(value) {
   return value === undefined || value === null ? "" : String(value);
 }
 
+function normalizeModelName(value) {
+  const text = safeText(value);
+  const normalized = text.trim().toUpperCase().replace(/\s+/g, " ");
+  if (normalized === "ABF 6 KG") return "ABF 6 L";
+  if (normalized === "ABF 9 KG") return "ABF 9 L";
+  return text;
+}
+
 function createId() {
   return `rec-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
@@ -76,7 +84,7 @@ function cleanRecord(record = {}) {
     edificio: safeText(record.edificio ?? record.edificioCodigo),
     cantidad: safeText(record.cantidad),
     ubicacion: safeText(record.ubicacion),
-    modelo: safeText(record.modelo),
+    modelo: normalizeModelName(record.modelo),
     numeroSerie: safeText(record.numeroSerie),
     fechaFabricacion: safeText(record.fechaFabricacion),
     fechaProximoRetimbrado: safeText(record.fechaProximoRetimbrado),

@@ -1,4 +1,4 @@
-const CACHE_NAME = "correctivos-v48-scroll-tabla";
+const CACHE_NAME = "correctivos-v49-modelos-abf";
 const ASSETS = [
   "./",
   "./index.html",
