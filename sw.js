@@ -1,4 +1,4 @@
-const CACHE_NAME = "correctivos-v47-alerta-retimbrado";
+const CACHE_NAME = "correctivos-v48-scroll-tabla";
 const ASSETS = [
   "./",
   "./index.html",

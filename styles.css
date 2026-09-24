@@ -403,7 +403,8 @@ textarea { resize: vertical; }
   overflow: auto;
   touch-action: pan-x pan-y;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
   background: rgba(255, 255, 255, .38);
   border: 1px solid var(--line);
   border-radius: 18px;
