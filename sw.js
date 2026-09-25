@@ -1,4 +1,4 @@
-const CACHE_NAME = "correctivos-v50-cuatro-fotos";
+const CACHE_NAME = "correctivos-v51-fotos-amarillas";
 const ASSETS = [
   "./",
   "./index.html",
