@@ -28,6 +28,7 @@ const fields = [
   "edificio",
   "cantidad",
   "ubicacion",
+  "localizacion",
   "modelo",
   "numeroSerie",
   "fechaFabricacion",
@@ -37,7 +38,7 @@ const fields = [
 ];
 
 let records = [];
-let currentPhotos = ["", ""];
+let currentPhotos = ["", "", "", ""];
 let voiceRecognition = null;
 let voiceStep = "numero";
 let voiceActive = false;
@@ -84,6 +85,7 @@ function cleanRecord(record = {}) {
     edificio: safeText(record.edificio ?? record.edificioCodigo),
     cantidad: safeText(record.cantidad),
     ubicacion: safeText(record.ubicacion),
+    localizacion: safeText(record.localizacion),
     modelo: normalizeModelName(record.modelo),
     numeroSerie: safeText(record.numeroSerie),
     fechaFabricacion: safeText(record.fechaFabricacion),
@@ -91,7 +93,9 @@ function cleanRecord(record = {}) {
     observaciones: safeText(record.observaciones),
     senal: safeText(record.senal),
     defectos: normalizeDefects(record.defectos),
-    photos: Array.isArray(record.photos) ? [safeText(record.photos[0]), safeText(record.photos[1])] : ["", ""],
+    photos: Array.isArray(record.photos)
+      ? [0, 1, 2, 3].map((index) => safeText(record.photos[index]))
+      : ["", "", "", ""],
     visto: Boolean(record.visto),
     origen: record.origen || "excel",
   };
@@ -156,6 +160,8 @@ const importFieldAliases = {
   visto: ["visto", "revisado", "ok", "realizado"],
   foto1: ["foto1", "foto", "imagen1", "imagen", "fotografia1"],
   foto2: ["foto2", "imagen2", "fotografia2"],
+  foto3: ["foto3", "imagen3", "fotografia3"],
+  foto4: ["foto4", "imagen4", "fotografia4"],
 };
 
 function headerMatchScore(header, aliases) {
@@ -272,6 +278,7 @@ function rowToImportedRecord(rowValues, index, headerMap = {}) {
     edificio: importedValue(rowValues, headerMap, ["edificio"], 2),
     cantidad: importedValue(rowValues, headerMap, ["cantidad", "numerosyco", "numero", "num"], 3),
     ubicacion: importedValue(rowValues, headerMap, ["ubicacion"], 4),
+    localizacion: importedValue(rowValues, headerMap, ["localizacion"], 0),
     modelo: importedValue(rowValues, headerMap, ["modelo"], 5),
     numeroSerie: importedValue(rowValues, headerMap, ["numeroSerie", "noserie", "numeroserie", "serie"], 6),
     fechaFabricacion: importedValue(rowValues, headerMap, ["fechaFabricacion", "fechaanofabricacion", "fechafabricacion", "fabricacion"], 7),
@@ -319,16 +326,20 @@ function imageTopLeft(image) {
 function importedPhotosByRow(workbook, sheet, headerMap) {
   const photosByRow = new Map();
   if (typeof sheet.getImages !== "function") return photosByRow;
-  const foto1Col = headerMap.foto1 || headerMap.foto || 21;
-  const foto2Col = headerMap.foto2 || 22;
+  const photoColumns = [
+    headerMap.foto1 || headerMap.foto || 25,
+    headerMap.foto2 || 26,
+    headerMap.foto3 || 27,
+    headerMap.foto4 || 28,
+  ];
   for (const image of sheet.getImages()) {
     const { row, col } = imageTopLeft(image);
     if (row <= 1) continue;
-    const photoIndex = col === foto1Col ? 0 : col === foto2Col ? 1 : -1;
+    const photoIndex = photoColumns.indexOf(col);
     if (photoIndex < 0) continue;
     const dataUrl = workbookImageToDataUrl(workbook, image.imageId);
     if (!dataUrl) continue;
-    const photos = photosByRow.get(row) || ["", ""];
+    const photos = photosByRow.get(row) || ["", "", "", ""];
     photos[photoIndex] = dataUrl;
     photosByRow.set(row, photos);
   }
@@ -1834,9 +1845,8 @@ function openForm(id = null) {
   for (const key of fields) $(key).value = safeText(record?.[key]);
   $("visto").checked = Boolean(record?.visto);
   renderDefects(record?.defectos || []);
-  const photos = Array.isArray(record?.photos) ? record.photos : ["", ""];
-  setPhotoPreview(0, photos[0]);
-  setPhotoPreview(1, photos[1]);
+  const photos = Array.isArray(record?.photos) ? record.photos : ["", "", "", ""];
+  [0, 1, 2, 3].forEach((index) => setPhotoPreview(index, photos[index]));
   showView("form");
 }
 
@@ -1844,7 +1854,7 @@ function collectForm() {
   const record = { id: $("recordId").value || createId(), origen: $("recordId").value ? "editado" : "manual" };
   for (const key of fields) record[key] = $(key).value.trim();
   record.defectos = Array.from($("defectsList").querySelectorAll("input:checked")).map((input) => input.value);
-  record.photos = [currentPhotos[0] || "", currentPhotos[1] || ""];
+  record.photos = [0, 1, 2, 3].map((index) => currentPhotos[index] || "");
   record.visto = $("visto").checked;
   return cleanRecord(record);
 }
@@ -1916,9 +1926,9 @@ function mergeImportedIntoExisting(existing, imported) {
     existing.visto = true;
     changed = true;
   }
-  const existingPhotos = Array.isArray(existing.photos) ? existing.photos : ["", ""];
-  const importedPhotos = Array.isArray(imported.photos) ? imported.photos : ["", ""];
-  for (let index = 0; index < 2; index += 1) {
+  const existingPhotos = Array.isArray(existing.photos) ? existing.photos : ["", "", "", ""];
+  const importedPhotos = Array.isArray(imported.photos) ? imported.photos : ["", "", "", ""];
+  for (let index = 0; index < 4; index += 1) {
     if (!existingPhotos[index] && importedPhotos[index]) {
       existingPhotos[index] = importedPhotos[index];
       changed = true;
@@ -1943,7 +1953,7 @@ async function importExcelFile(file) {
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return;
     const record = rowToImportedRecord(row.values, rowNumber, headerMap);
-    record.photos = photosByRow.get(rowNumber) || ["", ""];
+    record.photos = photosByRow.get(rowNumber) || ["", "", "", ""];
     const hasData = [record.edificio, record.cantidad, record.ubicacion, record.modelo, record.numeroSerie].some((value) => safeText(value).trim());
     if (!hasData) return;
     const key = recordKey(record);
@@ -1983,6 +1993,7 @@ async function downloadExcel() {
     ["edificio", "Edificio", 14],
     ["cantidad", "Número SYCo", 18],
     ["ubicacion", "Ubicación", 42],
+    ["localizacion", "Localización", 32],
     ["modelo", "Modelo", 20],
     ["numeroSerie", "Nº serie", 18],
     ["fechaFabricacion", "Fecha / año fabricación", 22],
@@ -2004,6 +2015,8 @@ async function downloadExcel() {
     ["defectoCargado", "Extintor cargado", 20],
     ["foto1", "Foto 1", 22],
     ["foto2", "Foto 2", 22],
+    ["foto3", "Foto 3", 22],
+    ["foto4", "Foto 4", 22],
     ["visto", "Visto", 10],
   ];
   sheet.columns = columns.map(([key, header, width]) => ({ key, header, width }));
@@ -2031,10 +2044,12 @@ async function downloadExcel() {
       defectoCargado: defectFlag(selected, "Extintor cargado."),
       foto1: record.photos[0] ? "Foto 1" : "",
       foto2: record.photos[1] ? "Foto 2" : "",
+      foto3: record.photos[2] ? "Foto 3" : "",
+      foto4: record.photos[3] ? "Foto 4" : "",
       visto: record.visto ? "Sí" : "No",
     });
-    if (record.photos[0] || record.photos[1]) row.height = 92;
-    [0, 1].forEach((photoIndex) => {
+    if (record.photos.some(Boolean)) row.height = 92;
+    [0, 1, 2, 3].forEach((photoIndex) => {
       const photo = record.photos[photoIndex];
       if (!photo) return;
       const imageId = workbook.addImage({ base64: photo, extension: "jpeg" });
@@ -2111,7 +2126,7 @@ function bindEvents() {
   });
   $("recordForm").addEventListener("submit", saveForm);
   $("deleteBtn").addEventListener("click", deleteCurrent);
-  [0, 1].forEach((index) => {
+  [0, 1, 2, 3].forEach((index) => {
     $(`photoInput${index + 1}`).addEventListener("change", async (event) => {
       const file = event.target.files?.[0];
       if (!file) return;

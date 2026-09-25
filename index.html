@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
     <meta name="theme-color" content="#8a1538" />
     <title>Correctivos</title>
-    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v49-modelos-abf" />
-    <link rel="stylesheet" href="styles.css?v=correctivos-v49-modelos-abf" />
+    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v50-cuatro-fotos" />
+    <link rel="stylesheet" href="styles.css?v=correctivos-v50-cuatro-fotos" />
   </head>
   <body>
     <header class="topbar">
@@ -335,6 +335,31 @@
                 <button type="button" id="deletePhoto2" class="photoDelete">Eliminar foto</button>
               </div>
             </div>
+
+            <label class="photoLocationField">Localización
+              <textarea id="localizacion" rows="2" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+            </label>
+
+            <div class="photoGrid">
+              <div class="photoSlot">
+                <strong>Foto 3</strong>
+                <label class="photoBox" id="photoBox3">
+                  <input id="photoInput3" type="file" accept="image/*" capture="environment" />
+                  <span>+ Hacer foto</span>
+                  <img id="photoPreview3" alt="Foto 3" class="hidden" />
+                </label>
+                <button type="button" id="deletePhoto3" class="photoDelete">Eliminar foto</button>
+              </div>
+              <div class="photoSlot">
+                <strong>Foto 4</strong>
+                <label class="photoBox" id="photoBox4">
+                  <input id="photoInput4" type="file" accept="image/*" capture="environment" />
+                  <span>+ Hacer foto</span>
+                  <img id="photoPreview4" alt="Foto 4" class="hidden" />
+                </label>
+                <button type="button" id="deletePhoto4" class="photoDelete">Eliminar foto</button>
+              </div>
+            </div>
           </div>
 
           <label class="seenLine">
@@ -351,8 +376,8 @@
       </section>
     </main>
 
-    <script src="exceljs.min.js?v=correctivos-v49-modelos-abf"></script>
-    <script src="seed-data.js?v=correctivos-v49-modelos-abf"></script>
-    <script src="app.js?v=correctivos-v49-modelos-abf"></script>
+    <script src="exceljs.min.js?v=correctivos-v50-cuatro-fotos"></script>
+    <script src="seed-data.js?v=correctivos-v50-cuatro-fotos"></script>
+    <script src="app.js?v=correctivos-v50-cuatro-fotos"></script>
   </body>
 </html>

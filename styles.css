@@ -628,6 +628,8 @@ label {
   gap: 18px;
 }
 
+.photoLocationField { margin-top: 18px; }
+
 .photoSlot {
   display: grid;
   gap: 10px;
