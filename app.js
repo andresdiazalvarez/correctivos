@@ -10,6 +10,7 @@ const defectOptions = [
   "Extintor descargado.",
   "Extintor sin presión.",
   "Extintor con presión baja.",
+  "Extintor con presión alta.",
   "Extintor en el suelo.",
   "Cristal armario roto o sin cristal.",
   "Sin señal.",
@@ -255,6 +256,7 @@ function importedDefects(rowValues, headerMap) {
     ["extintordescargado", "Extintor descargado."],
     ["extintorsinpresion", "Extintor sin presión."],
     ["extintorconpresionbaja", "Extintor con presión baja."],
+    ["extintorconpresionalta", "Extintor con presión alta."],
     ["extintorenelsuelo", "Extintor en el suelo."],
     ["cristalarmariorotoosincristal", "Cristal armario roto o sin cristal."],
     ["cristaldelextintorausenteoroto", "Cristal armario roto o sin cristal."],
@@ -327,10 +329,10 @@ function importedPhotosByRow(workbook, sheet, headerMap) {
   const photosByRow = new Map();
   if (typeof sheet.getImages !== "function") return photosByRow;
   const photoColumns = [
-    headerMap.foto1 || headerMap.foto || 25,
-    headerMap.foto2 || 26,
-    headerMap.foto3 || 27,
-    headerMap.foto4 || 28,
+    headerMap.foto1 || headerMap.foto || 26,
+    headerMap.foto2 || 27,
+    headerMap.foto3 || 28,
+    headerMap.foto4 || 29,
   ];
   for (const image of sheet.getImages()) {
     const { row, col } = imageTopLeft(image);
@@ -2006,6 +2008,7 @@ async function downloadExcel() {
     ["defectoDescargado", "Extintor descargado", 22],
     ["defectoSinPresion", "Extintor sin presión", 22],
     ["defectoPresionBaja", "Extintor con presión baja", 26],
+    ["defectoPresionAlta", "Extintor con presión alta", 26],
     ["defectoSuelo", "Extintor en el suelo", 22],
     ["defectoCristal", "Cristal armario roto o sin cristal", 32],
     ["defectoSinSenal", "Sin señal", 16],
@@ -2035,6 +2038,7 @@ async function downloadExcel() {
       defectoDescargado: defectFlag(selected, "Extintor descargado."),
       defectoSinPresion: defectFlag(selected, "Extintor sin presión."),
       defectoPresionBaja: defectFlag(selected, "Extintor con presión baja."),
+      defectoPresionAlta: defectFlag(selected, "Extintor con presión alta."),
       defectoSuelo: defectFlag(selected, "Extintor en el suelo."),
       defectoCristal: defectFlag(selected, "Cristal armario roto o sin cristal."),
       defectoSinSenal: defectFlag(selected, "Sin señal."),
