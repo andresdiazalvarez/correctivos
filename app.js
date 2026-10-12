@@ -107,8 +107,10 @@ function normalizeKeyPart(value) {
 }
 
 function recordKey(record) {
+  const sycoNumber = normalizeKeyPart(record.cantidad);
+  if (sycoNumber) return `syco|${sycoNumber}`;
   return [
-    normalizeKeyPart(record.cantidad),
+    "",
     normalizeKeyPart(record.numeroSerie),
     normalizeKeyPart(record.ubicacion),
   ].join("|");
@@ -1928,24 +1930,35 @@ function mergeImportedIntoExisting(existing, imported) {
     existing.visto = true;
     changed = true;
   }
-  const existingPhotos = Array.isArray(existing.photos) ? existing.photos : ["", "", "", ""];
+  const existingPhotos = Array.isArray(existing.photos)
+    ? [0, 1, 2, 3].map((index) => safeText(existing.photos[index]))
+    : ["", "", "", ""];
   const importedPhotos = Array.isArray(imported.photos) ? imported.photos : ["", "", "", ""];
-  for (let index = 0; index < 4; index += 1) {
-    if (!existingPhotos[index] && importedPhotos[index]) {
-      existingPhotos[index] = importedPhotos[index];
-      changed = true;
-    }
+  for (const importedPhoto of importedPhotos) {
+    if (!importedPhoto || existingPhotos.includes(importedPhoto)) continue;
+    const emptyIndex = existingPhotos.findIndex((photo) => !photo);
+    if (emptyIndex < 0) break;
+    existingPhotos[emptyIndex] = importedPhoto;
+    changed = true;
   }
   existing.photos = existingPhotos;
   return changed;
 }
 
-async function importExcelFile(file) {
-  if (!window.ExcelJS) return alert("No se ha cargado el lector de Excel.");
+async function importExcelFile(file, options = {}) {
+  const showResult = options.showResult !== false;
+  const saveAfter = options.saveAfter !== false;
+  if (!window.ExcelJS) {
+    if (showResult) alert("No se ha cargado el lector de Excel.");
+    throw new Error("ExcelJS no disponible");
+  }
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(await file.arrayBuffer());
   const sheet = workbook.worksheets[0];
-  if (!sheet) return alert("No encuentro ninguna hoja en ese Excel.");
+  if (!sheet) {
+    if (showResult) alert("No encuentro ninguna hoja en ese Excel.");
+    return { imported: 0, updated: 0, duplicates: 0, empty: true };
+  }
   const imported = [];
   const knownRecords = new Map(records.map((record) => [recordKey(record), record]).filter(([key]) => key !== "||"));
   let skippedDuplicates = 0;
@@ -1971,13 +1984,48 @@ async function importExcelFile(file) {
     const message = skippedDuplicates
       ? `No se importaron registros nuevos. Ya existían ${skippedDuplicates} registros.`
       : "No se encontraron registros para importar.";
-    $("importStatus").textContent = message;
-    return alert(message);
+    if (showResult) {
+      $("importStatus").textContent = message;
+      alert(message);
+    }
+    return { imported: 0, updated: 0, duplicates: skippedDuplicates, empty: !skippedDuplicates };
   }
   records = [...imported, ...records];
-  await saveRecords();
-  $("importStatus").textContent = `Importados ${imported.length} registros nuevos. Actualizados ${updatedDuplicates} existentes. Ya existían ${skippedDuplicates}.`;
-  alert(`Importación correcta.\nRegistros nuevos importados: ${imported.length}\nRegistros existentes actualizados: ${updatedDuplicates}\nRegistros ya existentes: ${skippedDuplicates}`);
+  if (saveAfter) await saveRecords();
+  if (showResult) {
+    $("importStatus").textContent = `Importados ${imported.length} registros nuevos. Actualizados ${updatedDuplicates} existentes. Ya existían ${skippedDuplicates}.`;
+    alert(`Importación correcta.\nRegistros nuevos importados: ${imported.length}\nRegistros existentes actualizados: ${updatedDuplicates}\nRegistros ya existentes: ${skippedDuplicates}`);
+  }
+  return { imported: imported.length, updated: updatedDuplicates, duplicates: skippedDuplicates, empty: false };
+}
+
+async function mergeExcelFiles(files) {
+  const selectedFiles = Array.from(files || []);
+  if (!selectedFiles.length) return;
+  const totals = { imported: 0, updated: 0, duplicates: 0, processed: 0 };
+  const failedFiles = [];
+  $("importStatus").textContent = `Uniendo ${selectedFiles.length} archivo(s)...`;
+
+  for (const file of selectedFiles) {
+    try {
+      const result = await importExcelFile(file, { showResult: false, saveAfter: false });
+      totals.imported += result.imported;
+      totals.updated += result.updated;
+      totals.duplicates += result.duplicates;
+      totals.processed += 1;
+    } catch (error) {
+      console.error(error);
+      failedFiles.push(file.name);
+    }
+  }
+
+  if (totals.processed) await saveRecords();
+  renderTable();
+  const summary = `Unión terminada. Nuevos: ${totals.imported}. Combinados: ${totals.updated}. Coincidencias: ${totals.duplicates}.`;
+  $("importStatus").textContent = failedFiles.length
+    ? `${summary} No se pudieron leer: ${failedFiles.join(", ")}.`
+    : summary;
+  alert(`${summary}\nArchivos procesados: ${totals.processed}.${failedFiles.length ? `\nArchivos no leídos: ${failedFiles.join(", ")}.` : ""}`);
 }
 
 function defectFlag(selected, defect) {
@@ -2109,6 +2157,7 @@ function bindEvents() {
   $("voiceSycoBtn").addEventListener("click", startSycoVoiceInput);
   $("voiceSerieBtn").addEventListener("click", startSerieVoiceInput);
   $("importExcelBtn").addEventListener("click", () => $("importExcelInput").click());
+  $("mergeExcelsBtn").addEventListener("click", () => $("mergeExcelsInput").click());
   $("importExcelInput").addEventListener("change", async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -2120,6 +2169,15 @@ function bindEvents() {
       console.error(error);
       $("importStatus").textContent = "No se ha podido importar el Excel.";
       alert("No se ha podido importar el Excel. Revisa que tenga el mismo formato.");
+    } finally {
+      event.target.value = "";
+    }
+  });
+  $("mergeExcelsInput").addEventListener("change", async (event) => {
+    const files = event.target.files;
+    if (!files?.length) return;
+    try {
+      await mergeExcelFiles(files);
     } finally {
       event.target.value = "";
     }
