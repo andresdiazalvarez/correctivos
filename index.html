@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
     <meta name="theme-color" content="#8a1538" />
     <title>Correctivos</title>
-    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v55-unir-moviles" />
-    <link rel="stylesheet" href="styles.css?v=correctivos-v55-unir-moviles" />
+    <link rel="manifest" href="manifest.webmanifest?v=correctivos-v57-orden-matricula" />
+    <link rel="stylesheet" href="styles.css?v=correctivos-v57-orden-matricula" />
   </head>
   <body>
     <header class="topbar">
@@ -50,8 +50,8 @@
 
         <div class="compactFilters">
           <label>Edificio<input id="filterEdificio" type="search" placeholder="Filtrar edificio" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
-          <label>Número SYCo<input id="filterNumero" type="search" placeholder="Filtrar número" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
-          <label>Nº serie<input id="filterSerie" type="search" placeholder="Filtrar serie" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
+          <label>nº syco<input id="filterNumero" type="search" placeholder="Filtrar nº syco" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
+          <label>MATRICULA<input id="filterSerie" type="search" placeholder="Filtrar matrícula" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
           <div class="dateFilterPair">
             <label>Fabricación<input id="filterFabricacion" type="search" placeholder="Ej. 21" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
             <label>Retimbrado<input id="filterRetimbrado" type="search" placeholder="Ej. 2021" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
@@ -60,7 +60,7 @@
             <select id="sortOrder">
               <option value="none">Sin ordenar</option>
               <option value="edificio">Edificio</option>
-              <option value="numero">Número SYCo</option>
+              <option value="numero">nº syco</option>
             </select>
           </label>
           <label>Estado
@@ -81,14 +81,14 @@
           <table>
             <thead>
               <tr>
-                <th>Número SYCo</th>
+                <th>nº syco</th>
                 <th>Visto</th>
                 <th>Ver / corregir</th>
                 <th>Edificio</th>
                 <th>Cliente</th>
                 <th>Ubicación</th>
                 <th>Modelo</th>
-                <th>Nº serie</th>
+                <th>MATRICULA</th>
                 <th>Fabricación</th>
                 <th>Retimbrado</th>
                 <th>Observaciones</th>
@@ -165,7 +165,7 @@
         <div class="instructionBox">
           <h3>Instrucciones de relleno</h3>
           <p><strong>Cliente:</strong> cliente. edificio</p>
-          <p><strong>Núm:</strong> Número SYCo</p>
+          <p><strong>Núm:</strong> nº syco</p>
           <p><strong>Eficacía:</strong> no se rellena</p>
           <p><strong>Op. Realiza:</strong> Revisión, o Revisión y recarga cuando en observaciones se indique recarga o retimbrado.</p>
           <p><strong>Cadu 20 A:</strong> año de fabricación + 20.</p>
@@ -240,11 +240,12 @@
 
         <form id="recordForm" class="card formCard" autocomplete="off">
           <input type="hidden" id="recordId" />
+          <input type="hidden" id="cliente" />
 
           <div class="voiceBlock">
             <div>
               <h3>Entrada por voz</h3>
-              <p id="voiceStatus">Pulsa iniciar y dicta: numero, modelo con codigo, serie, fabricacion y retimbrado.</p>
+              <p id="voiceStatus">Pulsa iniciar y dicta: número, modelo con código, matrícula, fabricación y retimbrado.</p>
             </div>
             <div class="voiceActions">
               <button type="button" id="voiceStartBtn" class="secondary">Iniciar voz</button>
@@ -252,14 +253,20 @@
             </div>
           </div>
 
-          <label>Cliente<input id="cliente" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
-          <label>Edificio<input id="edificio" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
-          <label>Número SYCo
+          <label class="sycoField">nº syco
             <div class="fieldWithButton">
               <input id="cantidad" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
               <button type="button" id="voiceSycoBtn" class="iconTextButton">Dictar</button>
             </div>
             <span id="voiceSycoStatus" class="fieldHint"></span>
+          </label>
+          <label>Edificio<input id="edificio" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" /></label>
+          <label>MATRICULA
+            <div class="fieldWithButton">
+              <input id="numeroSerie" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+              <button type="button" id="voiceSerieBtn" class="iconTextButton">Dictar</button>
+            </div>
+            <span id="voiceSerieStatus" class="fieldHint"></span>
           </label>
           <label>Ubicación<textarea id="ubicacion" rows="2" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea></label>
           <label>Modelo
@@ -278,14 +285,9 @@
               <option value="ABC 25 KG"></option>
               <option value="ABC 50 KG"></option>
               <option value="ABC 100 KG"></option>
+              <option value="ABC 6 KG SPRINKLER"></option>
+              <option value="ABC 9 KG SPRINKLER"></option>
             </datalist>
-          </label>
-          <label>N&ordm; serie
-            <div class="fieldWithButton">
-              <input id="numeroSerie" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-              <button type="button" id="voiceSerieBtn" class="iconTextButton">Dictar</button>
-            </div>
-            <span id="voiceSerieStatus" class="fieldHint"></span>
           </label>
           <label>Fecha / año fabricación
             <select id="fechaFabricacion" class="dateChoice"></select>
@@ -378,8 +380,8 @@
       </section>
     </main>
 
-    <script src="exceljs.min.js?v=correctivos-v55-unir-moviles"></script>
-    <script src="seed-data.js?v=correctivos-v55-unir-moviles"></script>
-    <script src="app.js?v=correctivos-v55-unir-moviles"></script>
+    <script src="exceljs.min.js?v=correctivos-v57-orden-matricula"></script>
+    <script src="seed-data.js?v=correctivos-v57-orden-matricula"></script>
+    <script src="app.js?v=correctivos-v57-orden-matricula"></script>
   </body>
 </html>

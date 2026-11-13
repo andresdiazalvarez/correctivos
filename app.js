@@ -154,7 +154,7 @@ const importFieldAliases = {
   cantidad: ["numero syco", "n syco", "nº syco", "numerosyco", "numsyco", "nosyco", "syco", "numero de extintor", "numero extintor", "numextintor", "num", "numero", "numequipo", "numero equipo", "numero de equipo"],
   ubicacion: ["ubicacion", "situacion", "localizacion", "emplazamientoequipo", "lugar", "zonaubicacion"],
   modelo: ["modelo", "tipo", "clase", "descripcion", "tipomodelo"],
-  numeroSerie: ["n serie", "nº serie", "no serie", "numero serie", "numero de serie", "noserie", "nserie", "numeroserie", "serie", "numserie", "noserial", "serial", "placa", "n placa", "nº placa", "numero placa", "numero de placa", "noplaca", "numeroplaca"],
+  numeroSerie: ["matricula", "n serie", "nº serie", "no serie", "numero serie", "numero de serie", "noserie", "nserie", "numeroserie", "serie", "numserie", "noserial", "serial", "placa", "n placa", "nº placa", "numero placa", "numero de placa", "noplaca", "numeroplaca"],
   fechaFabricacion: ["fecha ano fabricacion", "fecha año fabricacion", "fecha de fabricacion", "fechaanofabricacion", "fechafabricacion", "ano fabricacion", "año fabricacion", "anofabricacion", "fabricacion", "fabrica", "fabricado", "fechaalta"],
   fechaProximoRetimbrado: ["fecha retimbrado", "fecha de retimbrado", "retimbrado", "retimbre", "ultimo retimbrado", "fecha ultimo retimbrado", "fecharetimbrado", "ultimoretimbrado", "fechaultimoretimbrado", "proxretimbrado"],
   observaciones: ["observaciones", "observacion", "obs", "comentarios", "notas", "incidencias"],
@@ -664,8 +664,8 @@ function correctivosWordHtml() {
           <thead>
             <tr>
               <th>Edificio</th>
-              <th>Número</th>
-              <th>Nº serie</th>
+              <th>nº syco</th>
+              <th>MATRICULA</th>
               <th>Modelo</th>
             </tr>
           </thead>
@@ -798,8 +798,8 @@ function retimbradosWordHtml() {
     <thead>
       <tr>
         <th>Edificio</th>
-        <th>Número de extintor</th>
-        <th>Número de serie</th>
+        <th>nº syco</th>
+        <th>MATRICULA</th>
         <th>Modelo</th>
         <th>Fecha de fabricación</th>
         <th>Fecha retimbrado</th>
@@ -998,8 +998,8 @@ function caducadosWordHtml() {
     <thead>
       <tr>
         <th>Edificio</th>
-        <th>Número de extintor</th>
-        <th>Número de serie</th>
+        <th>nº syco</th>
+        <th>MATRICULA</th>
         <th>Modelo</th>
         <th>Fecha de fabricación</th>
         <th>Caducidad 20 A</th>
@@ -1517,7 +1517,7 @@ function handleVoiceText(text) {
     if (modelValue) {
       $("modelo").value = speechToModel(modelValue);
       voiceStep = "serie";
-      setVoiceStatus('Modelo anotado. Ahora di "serie" y dicta el numero de serie, numero a numero.');
+      setVoiceStatus('Modelo anotado. Ahora di "matricula" y dicta la matrícula, número a número.');
     } else {
       voiceStep = "modeloValor";
       setVoiceStatus("Ahora di el modelo del extintor.");
@@ -1528,23 +1528,23 @@ function handleVoiceText(text) {
   if (voiceStep === "modeloValor") {
     $("modelo").value = speechToModel(text);
     voiceStep = "serie";
-    setVoiceStatus('Modelo anotado. Ahora di "serie" y dicta el numero de serie, numero a numero.');
+    setVoiceStatus('Modelo anotado. Ahora di "matricula" y dicta la matrícula, número a número.');
     return;
   }
 
   if (voiceStep === "serie") {
-    const serieValue = captureAfterKeyword(text, "serie");
-    if (!serieValue && !normalized.includes("serie")) {
-      setVoiceStatus('Di "serie" y despues el numero de serie.');
+    const serieValue = captureAfterKeyword(text, "matricula") || captureAfterKeyword(text, "serie");
+    if (!serieValue && !normalized.includes("matricula") && !normalized.includes("serie")) {
+      setVoiceStatus('Di "matricula" y después dicta la matrícula.');
       return;
     }
     if (serieValue) {
       appendSerial(serieValue);
       voiceStep = "numeroSerie";
-      setVoiceStatus('Numero de serie anotado. Cuando termines di "fabricacion" y la fecha.');
+      setVoiceStatus('Matrícula anotada. Cuando termines di "fabricacion" y la fecha.');
     } else {
       voiceStep = "numeroSerie";
-      setVoiceStatus("Ahora dicta el numero de serie, numero a numero.");
+      setVoiceStatus("Ahora dicta la matrícula, número a número.");
     }
     return;
   }
@@ -1561,7 +1561,7 @@ function handleVoiceText(text) {
       return;
     }
     appendSerial(text);
-    setVoiceStatus('Numero de serie anotado. Cuando termines di "fabricacion" y la fecha.');
+    setVoiceStatus('Matrícula anotada. Cuando termines di "fabricacion" y la fecha.');
     return;
   }
 
@@ -1705,7 +1705,7 @@ function finishSerieVoiceInput(showMessage = true) {
   if (value) $("numeroSerie").value = value;
   $("voiceSerieBtn").disabled = false;
   $("voiceSerieBtn").textContent = "Dictar";
-  if (showMessage) setSerieVoiceStatus(value ? `Serie anotada: ${value}` : "No se ha reconocido ningun numero de serie.");
+  if (showMessage) setSerieVoiceStatus(value ? `Matrícula anotada: ${value}` : "No se ha reconocido ninguna matrícula.");
 }
 
 function handleSerieVoiceText(text) {
@@ -1839,6 +1839,11 @@ function resizePhoto(file) {
   });
 }
 
+function defaultClientName() {
+  const recordWithClient = records.find((record) => safeText(record.cliente).trim());
+  return recordWithClient ? safeText(recordWithClient.cliente).trim() : "";
+}
+
 function openForm(id = null) {
   const record = id ? records.find((item) => item.id === id) : null;
   $("recordId").value = record?.id || "";
@@ -1847,6 +1852,7 @@ function openForm(id = null) {
   $("formKicker").textContent = record ? "REGISTRO EXISTENTE" : "NUEVO REGISTRO";
   $("deleteBtn").classList.toggle("hidden", !record);
   for (const key of fields) $(key).value = safeText(record?.[key]);
+  if (!record) $("cliente").value = defaultClientName();
   $("visto").checked = Boolean(record?.visto);
   renderDefects(record?.defectos || []);
   const photos = Array.isArray(record?.photos) ? record.photos : ["", "", "", ""];
@@ -2041,11 +2047,11 @@ async function downloadExcel() {
   const columns = [
     ["cliente", "Cliente", 22],
     ["edificio", "Edificio", 14],
-    ["cantidad", "Número SYCo", 18],
+    ["cantidad", "nº syco", 18],
     ["ubicacion", "Ubicación", 42],
     ["localizacion", "Localización", 32],
     ["modelo", "Modelo", 20],
-    ["numeroSerie", "Nº serie", 18],
+    ["numeroSerie", "MATRICULA", 18],
     ["fechaFabricacion", "Fecha / año fabricación", 22],
     ["fechaProximoRetimbrado", "Fecha retimbrado", 20],
     ["observaciones", "Observaciones", 34],
